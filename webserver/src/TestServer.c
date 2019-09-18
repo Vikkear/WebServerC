@@ -16,8 +16,8 @@
 char * rootDir = "../../www";
 
 int checkVersion(char* version);
-int handleGET(char* path);
-int checkFile(char* fileName);
+int handleGET(int sd, char* path);
+FILE* checkFile(char* fileName);
 int validInputStr(char * input);
 
 int main(int argc, char* argv[])
@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
         if (strcmp(requests[0], "GET") == 0){
             if(checkVersion(requests[2]) == 1){
                 printf("correct version\n");
-                handleGET(requests[1]);
+                handleGET(sd_current, requests[1]);
             } else {
                 // 400
                 printf("incorrect version\n");
@@ -124,13 +124,17 @@ int main(int argc, char* argv[])
     exit(0);
 }
 
-int handleGET(char* path){
+int handleGET(int sd ,char* path){
     printf("%s\n", path);
+    validInputStr(path);
     // Check if file exists
-    if(checkFile(path) == 1){
-        printf("Hittade filen");
+    FILE* file = checkFile(path);
+    if(file){
+        // 200 File found
+        sendfile(sd, fileno(file), NULL, BUFSIZE);
     } else {
-        printf("Hittade INTE filen");
+        // 404 File not found
+
     }
 }
 
@@ -142,17 +146,16 @@ int checkVersion(char* version){
     return 0;
 }
 
-int checkFile(char* fileName){
+FILE* checkFile(char* fileName){
     FILE * file;
     char path[MAX_PATH_STR] = "";
     strncpy(path , rootDir, MAX_PATH_STR);
     strcat(path, fileName);
     file = fopen(path, "r");
     if(file){
-        fclose(file);
-        return 1;
+        return file;
     } else {
-        return 0;
+        return NULL;
     }
 }
 
