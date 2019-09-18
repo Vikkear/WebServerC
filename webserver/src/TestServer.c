@@ -11,9 +11,14 @@
 
 #define DIE(str) perror(str);exit(-1);
 #define BUFSIZE 512
+#define MAX_PATH_STR 80
+
+char * rootDir = "../../www";
 
 int checkVersion(char* version);
 int handleGET(char* path);
+int checkFile(char* fileName);
+int validInputStr(char * input);
 
 int main(int argc, char* argv[])
 {
@@ -91,7 +96,9 @@ int main(int argc, char* argv[])
         if (strcmp(requests[0], "GET") == 0){
             if(checkVersion(requests[2]) == 1){
                 printf("correct version\n");
+                handleGET(requests[1]);
             } else {
+                // 400
                 printf("incorrect version\n");
             }
         }
@@ -99,10 +106,12 @@ int main(int argc, char* argv[])
             if(checkVersion(requests[2]) == 1){
                 printf("correct version\n");
             } else {
+                // 400
                 printf("incorrect version\n");
             }
         }
         else{
+            // 501
             printf("501\n");
         }
 
@@ -117,16 +126,36 @@ int main(int argc, char* argv[])
 
 int handleGET(char* path){
     printf("%s\n", path);
+    // Check if file exists
+    if(checkFile(path) == 1){
+        printf("Hittade filen");
+    } else {
+        printf("Hittade INTE filen");
+    }
 }
 
 int checkVersion(char* version){
-    int len = strlen(version);
-    if(version[len-1] == "\n"){
-        version[len-1] = "\0";
-    }
-    printf("version: %s", version);
-    if (strcmp(version, "HTTP/1.0") == 0){
+    //NOTE: If client doesn't add newline version can get fucked
+    if (strcmp(version, "HTTP/1.0\n") == 0){
         return 1;
     }
     return 0;
+}
+
+int checkFile(char* fileName){
+    FILE * file;
+    char path[MAX_PATH_STR] = "";
+    strncpy(path , rootDir, MAX_PATH_STR);
+    strcat(path, fileName);
+    file = fopen(path, "r");
+    if(file){
+        fclose(file);
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+int validInputStr(char * input){
+
 }
