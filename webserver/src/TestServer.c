@@ -12,13 +12,16 @@
 #define DIE(str) perror(str);exit(-1);
 #define BUFSIZE 512
 
+int checkVersion(char* version);
+int handleGET(char* path);
+
 int main(int argc, char* argv[])
 {
     int portnumber;
 	struct sockaddr_in sin, pin;
 	int sd, sd_current;
 	int addrlen;
-	char buf[BUFSIZE];
+	char buf[BUFSIZE] = "";
 
 	if(argc != 2) {
 		fprintf(stderr, "Usage: %s <port>\n", argv[0]);
@@ -68,6 +71,7 @@ int main(int argc, char* argv[])
 
     if (forkID != 0) {
         /* receive at most sizeof(buf) many bytes and store them in the buffer */
+
         if (recv(sd_current, buf, sizeof(buf), 0) == -1) {
             DIE("recv");
         }
@@ -83,6 +87,25 @@ int main(int argc, char* argv[])
         for (int i = 0; i < requestCounter; i++){
             printf("%s\n", requests[i]);
         }
+
+        if (strcmp(requests[0], "GET") == 0){
+            if(checkVersion(requests[2]) == 1){
+                printf("correct version\n");
+            } else {
+                printf("incorrect version\n");
+            }
+        }
+        else if(strcmp(requests[0], "HEAD") == 0){
+            if(checkVersion(requests[2]) == 1){
+                printf("correct version\n");
+            } else {
+                printf("incorrect version\n");
+            }
+        }
+        else{
+            printf("501\n");
+        }
+
     }
 
     if (forkID == 0){
@@ -90,4 +113,20 @@ int main(int argc, char* argv[])
     }
     shutdown(sd_current, SHUT_RD);
     exit(0);
+}
+
+int handleGET(char* path){
+    printf("%s\n", path);
+}
+
+int checkVersion(char* version){
+    int len = strlen(version);
+    if(version[len-1] == "\n"){
+        version[len-1] = "\0";
+    }
+    printf("version: %s", version);
+    if (strcmp(version, "HTTP/1.0") == 0){
+        return 1;
+    }
+    return 0;
 }
