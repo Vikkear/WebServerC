@@ -132,11 +132,11 @@ int handleGET(int sd ,char* path){
     if(file){
         // 200 File found
         char tmpSTR[BUFSIZE] = "";
-        char fileContent[BUFSIZE] = "HTTP/1.0 200 ok\n";
+        char fileContent[BUFSIZE] = "HTTP/1.0 200 ok\nContent-type: text/html\n\n";
         while (fgets(tmpSTR, BUFSIZE, file) != NULL){
             strcat(fileContent, tmpSTR);
         }
-        send(sd, fileContent, BUFSIZE, NULL);
+        send(sd, fileContent, BUFSIZE, MSG_EOR);
         //sendfile(sd, fileno(file), NULL, BUFSIZE);
     } else {
         // 404 File not found
