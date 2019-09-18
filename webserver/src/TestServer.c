@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
         char* request = strtok(buf, delim);
         char* requests[3];
         int requestCounter = 0;
-        while (request != NULL) {
+        while (request != NULL && requestCounter < 3) {
             requests[requestCounter++] = request;
             request = strtok(NULL, delim);
         }
@@ -85,7 +85,9 @@ int main(int argc, char* argv[])
         }
     }
 
-    shutdown(sd, SHUT_RD);
+    if (forkID == 0){
+        shutdown(sd, SHUT_RD);
+    }
     shutdown(sd_current, SHUT_RD);
     exit(0);
 }
