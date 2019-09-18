@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
 
     }
 
-if (forkID != 0) {
+    if (forkID != 0) {
         /* receive at most sizeof(buf) many bytes and store them in the buffer */
         if (recv(sd_current, buf, sizeof(buf), 0) == -1) {
             DIE("recv");
@@ -74,5 +74,7 @@ if (forkID != 0) {
         printf("%s\n", buf);
     }
 
-    return 0;
+    shutdown(sd, SHUT_RD);
+    shutdown(sd_current, SHUT_RD);
+    exit(0);
 }
