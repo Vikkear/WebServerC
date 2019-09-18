@@ -54,21 +54,25 @@ int main(int argc, char* argv[])
         /* wait for incomming connections;
          * the address information of the communication partner is placed in
          * the provided sockaddr_in struct */
-	if ((sd_current = accept(sd, (struct sockaddr*) &pin, (socklen_t*) &addrlen)) == -1) {
-		DIE("accept");
-	}
+    int forkID = 0;
+    while(forkID == 0){
+    	if ((sd_current = accept(sd, (struct sockaddr*) &pin, (socklen_t*) &addrlen)) == -1) {
+    		DIE("accept");
+    	}
+        printf("accepted connection\n");
 
-    //TODO: MAKE THE BEST FORK/THROD
+        //TODO: MAKE THE BEST FORK/THROD
+        forkID = fork();
 
-	printf("accepted connection\n");
+    }
+
+if (forkID != 0) {
         /* receive at most sizeof(buf) many bytes and store them in the buffer */
-	if (recv(sd_current, buf, sizeof(buf), 0) == -1) {
-		DIE("recv");
-	}
-
-
-
-
+        if (recv(sd_current, buf, sizeof(buf), 0) == -1) {
+            DIE("recv");
+        }
+        printf("%s\n", buf);
+    }
 
     return 0;
 }
