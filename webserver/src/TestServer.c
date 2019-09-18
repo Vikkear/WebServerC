@@ -131,7 +131,13 @@ int handleGET(int sd ,char* path){
     FILE* file = checkFile(path);
     if(file){
         // 200 File found
-        sendfile(sd, fileno(file), NULL, BUFSIZE);
+        char tmpSTR[BUFSIZE] = "";
+        char fileContent[BUFSIZE] = "HTTP/1.0 200 ok\n";
+        while (fgets(tmpSTR, BUFSIZE, file) != NULL){
+            strcat(fileContent, tmpSTR);
+        }
+        send(sd, fileContent, BUFSIZE, NULL);
+        //sendfile(sd, fileno(file), NULL, BUFSIZE);
     } else {
         // 404 File not found
 
@@ -140,7 +146,7 @@ int handleGET(int sd ,char* path){
 
 int checkVersion(char* version){
     //NOTE: If client doesn't add newline version can get fucked
-    if (strcmp(version, "HTTP/1.0\n") == 0){
+    if (strstr(version, "HTTP/1.0") != NULL){
         return 1;
     }
     return 0;
