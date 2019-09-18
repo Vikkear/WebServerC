@@ -72,6 +72,17 @@ int main(int argc, char* argv[])
             DIE("recv");
         }
         printf("%s\n", buf);
+        char delim[] = " ";
+        char* request = strtok(buf, delim);
+        char* requests[3];
+        int requestCounter = 0;
+        while (request != NULL) {
+            requests[requestCounter++] = request;
+            request = strtok(NULL, delim);
+        }
+        for (int i = 0; i < requestCounter; i++){
+            printf("%s\n", requests[i]);
+        }
     }
 
     shutdown(sd, SHUT_RD);
