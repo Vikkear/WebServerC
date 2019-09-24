@@ -231,6 +231,7 @@ FILE *checkFile(int sd, char *fileName)
 
     if (rPermission != 0){
         handleForbiddenRequest(sd);
+        closeConnection(sd);
     }
 
     file = fopen(path, "r");
