@@ -15,6 +15,8 @@
 #define BUFSIZE 512
 #define MAX_PATH_STR 80
 
+char unSupported[][7] = {"POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH"};
+
 char *rootDir = "../../www";
 
 int checkVersion(char *version);
@@ -22,6 +24,7 @@ int handleGET(int sd, char *path);
 int handleBadRequest(int sd);
 FILE *checkFile(char *fileName);
 int validInputStr(char *input);
+int checkUnsuppotedMethod(char* method);
 
 int main(int argc, char *argv[])
 {
@@ -108,6 +111,10 @@ int main(int argc, char *argv[])
             printf("%s\n", requests[i]);
         }
 
+        if(checkUnsuppotedMethod(requests[0]) == 1) {
+            //501
+        }
+
         if (strcmp(requests[0], "GET") == 0)
         {
             if (checkVersion(requests[2]) == 1)
@@ -137,6 +144,7 @@ int main(int argc, char *argv[])
         }
         else
         {
+            handleBadRequest(sd_current);
             // 501
             printf("501\n");
         }
@@ -148,6 +156,8 @@ int main(int argc, char *argv[])
     }
 
     shutdown(sd_current, SHUT_RD);
+    close(sd_current);
+
     exit(0);
 }
 
@@ -186,6 +196,18 @@ int checkVersion(char *version)
     if (strstr(version, "HTTP/1.0") != NULL)
     {
         return 1;
+    }
+    return 0;
+}
+
+int checkUnsuppotedMethod(char* method){
+    // Check if unsupported method
+    for(int i = 0; i < 7; i++){
+        if(strcmp(method, unSupported[i]) == 0){
+            char fileContent[BUFSIZE] = "HTTP/1.0 501 Not Implemented\n\n";
+            send(sd, fileContent, strlen(fileContent), MSG_EOR);
+            return 1;
+        }
     }
     return 0;
 }
