@@ -24,7 +24,7 @@ int handleGET(int sd, char *path);
 int handleBadRequest(int sd);
 FILE *checkFile(char *fileName);
 int validInputStr(char *input);
-int checkUnsuppotedMethod(char* method);
+int checkUnsuppotedMethod(int sd, char* method);
 
 int main(int argc, char *argv[])
 {
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
             printf("%s\n", requests[i]);
         }
 
-        if(checkUnsuppotedMethod(requests[0]) == 1) {
+        if(checkUnsuppotedMethod(sd_current, requests[0]) == 1) {
             //501
         }
 
@@ -200,7 +200,7 @@ int checkVersion(char *version)
     return 0;
 }
 
-int checkUnsuppotedMethod(char* method){
+int checkUnsuppotedMethod(int sd,char* method){
     // Check if unsupported method
     for(int i = 0; i < 7; i++){
         if(strcmp(method, unSupported[i]) == 0){
