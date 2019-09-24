@@ -19,6 +19,7 @@ char unSupported[][7] = {"POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE",
 
 char *rootDir = "../../www";
 
+int handleRequest(int sd_current, char* buff);
 int checkVersion(char *version);
 int handleGET(int sd, char *path);
 int handleBadRequest(int sd);
@@ -28,22 +29,32 @@ int checkUnsuppotedMethod(int sd, char* method);
 void closeConnection(int sd);
 void handleFileNotFound(int sd);
 void handleForbiddenRequest(int sd);
+void printHelp();
 
 int main(int argc, char *argv[])
 {
-    int portnumber;
+    int portnumber = NULL;
     struct sockaddr_in sin, pin;
     int sd, sd_current;
     int addrlen;
     char buf[BUFSIZE] = "";
 
-    if (argc != 2)
-    {
-        fprintf(stderr, "Usage: %s <port>\n", argv[0]);
-        exit(-1);
+    // Command line options:
+    // -h Print help text
+    // "-p port" Listen to port number "port"
+
+    for(int i = 1; i < argc; i++){
+        if(strcmp(argv[i], "-h") == 0) printHelp();
+        if(strcmp(argv[i], "-p") == 0){
+            if(i+1 < argc) portnumber = atoi(argv[i+1]);
+        }
     }
 
-    portnumber = atoi(argv[1]);
+    if (argc < 2 || portnumber != NULL){
+        printHelp();
+    }
+
+    //portnumber = atoi(argv[1]);
 
     if ((sd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
@@ -90,72 +101,7 @@ int main(int argc, char *argv[])
 
     if (forkID != 0)
     {
-        /* receive at most sizeof(buf) many bytes and store them in the buffer */
-
-        if (recv(sd_current, buf, sizeof(buf), 0) == -1)
-        {
-            DIE("recv");
-        }
-
-        printf("%s\n", buf);
-        char delim[] = " ";
-        char *request = strtok(buf, delim);
-        char *requests[3];
-        int requestCounter = 0;
-
-        while (request != NULL)
-        {
-            requests[requestCounter++] = request;
-            request = strtok(NULL, delim);
-        }
-
-        for (int i = 0; i < requestCounter; i++)
-        {
-            printf("%s\n", requests[i]);
-        }
-        printf("Request counter: %d\n", requestCounter);
-
-        //TODO: Space after last request adds to requestCounter
-        if (requestCounter > 3){
-            handleBadRequest(sd_current);
-            closeConnection(sd_current);
-        }
-
-        if(checkUnsuppotedMethod(sd_current, requests[0]) == 1) {
-            closeConnection(sd_current);
-        }
-
-        if (strcmp(requests[0], "GET") == 0)
-        {
-            if (checkVersion(requests[2]) == 1)
-            {
-                printf("correct version\n");
-                handleGET(sd_current, requests[1]);
-            }
-            else
-            {
-                // 400
-                handleBadRequest(sd_current);
-                printf("incorrect version\n");
-            }
-        }
-        else if (strcmp(requests[0], "HEAD") == 0)
-        {
-            if (checkVersion(requests[2]) == 1)
-            {
-                printf("correct version\n");
-            }
-            else
-            {
-                // 400
-                handleBadRequest(sd_current);
-                printf("incorrect version\n");
-            }
-        }
-        else
-        {
-            handleBadRequest(sd_current);
-        }
+        handleRequest(sd_current, buf);
     }
 
     if (forkID == 0)
@@ -165,8 +111,77 @@ int main(int argc, char *argv[])
 
     //shutdown(sd_current, SHUT_RD);
     close(sd_current);
-
     exit(0);
+}
+
+int handleRequest(int sd_current, char* buf){
+    /* receive at most sizeof(buf) many bytes and store them in the buffer */
+
+    if (recv(sd_current, buf, sizeof(buf), 0) == -1)
+    {
+        DIE("recv");
+    }
+
+    printf("%s\n", buf);
+    char delim[] = " ";
+    char *request = strtok(buf, delim);
+    char *requests[3];
+    int requestCounter = 0;
+
+    while (request != NULL)
+    {
+        requests[requestCounter++] = request;
+        request = strtok(NULL, delim);
+    }
+
+    for (int i = 0; i < requestCounter; i++)
+    {
+        printf("%s\n", requests[i]);
+    }
+    printf("Request counter: %d\n", requestCounter);
+
+    //TODO: Space after last request adds to requestCounter
+    if (requestCounter > 3){
+        handleBadRequest(sd_current);
+        closeConnection(sd_current);
+    }
+
+    if(checkUnsuppotedMethod(sd_current, requests[0]) == 1) {
+        closeConnection(sd_current);
+    }
+
+    if (strcmp(requests[0], "GET") == 0)
+    {
+        if (checkVersion(requests[2]) == 1)
+        {
+            printf("correct version\n");
+            handleGET(sd_current, requests[1]);
+        }
+        else
+        {
+            // 400
+            handleBadRequest(sd_current);
+            printf("incorrect version\n");
+        }
+    }
+    else if (strcmp(requests[0], "HEAD") == 0)
+    {
+        if (checkVersion(requests[2]) == 1)
+        {
+            printf("correct version\n");
+        }
+        else
+        {
+            // 400
+            handleBadRequest(sd_current);
+            printf("incorrect version\n");
+        }
+    }
+    else
+    {
+        handleBadRequest(sd_current);
+    }
+    return 0;
 }
 
 int handleGET(int sd, char *path)
@@ -265,4 +280,10 @@ void closeConnection(int sd){
     //shutdown(sd, SHUT_RD);
     close(sd);
     exit(0);
+}
+
+void printHelp(){
+    printf("Usage: ./webserver [h|p]\n");
+    printf("-h\n\tPrint this help menu\n");
+    printf("-p <port>\n\tSelect which port to listen on\n");
 }
