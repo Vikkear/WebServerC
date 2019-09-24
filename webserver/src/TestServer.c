@@ -25,6 +25,7 @@ int handleBadRequest(int sd);
 FILE *checkFile(char *fileName);
 int validInputStr(char *input);
 int checkUnsuppotedMethod(int sd, char* method);
+void closeConnection(int sd);
 
 int main(int argc, char *argv[])
 {
@@ -111,44 +112,47 @@ int main(int argc, char *argv[])
             printf("%s\n", requests[i]);
         }
 
-        if(checkUnsuppotedMethod(sd_current, requests[0]) == 0) {
+        if (requestCounter > 3){
+            handleBadRequest(sd_current);
+            closeConnection(sd_current);
+        }
 
-            if (strcmp(requests[0], "GET") == 0)
+        if(checkUnsuppotedMethod(sd_current, requests[0]) == 0) {
+            closeConnection(sd_current);
+        }
+
+        if (strcmp(requests[0], "GET") == 0)
+        {
+            if (checkVersion(requests[2]) == 1)
             {
-                if (checkVersion(requests[2]) == 1)
-                {
-                    printf("correct version\n");
-                    handleGET(sd_current, requests[1]);
-                }
-                else
-                {
-                    // 400
-                    handleBadRequest(sd_current);
-                    printf("incorrect version\n");
-                }
-            }
-            else if (strcmp(requests[0], "HEAD") == 0)
-            {
-                if (checkVersion(requests[2]) == 1)
-                {
-                    printf("correct version\n");
-                }
-                else
-                {
-                    // 400
-                    handleBadRequest(sd_current);
-                    printf("incorrect version\n");
-                }
+                printf("correct version\n");
+                handleGET(sd_current, requests[1]);
             }
             else
             {
+                // 400
                 handleBadRequest(sd_current);
-                // 501
-                printf("501\n");
+                printf("incorrect version\n");
             }
         }
-            
+        else if (strcmp(requests[0], "HEAD") == 0)
+        {
+            if (checkVersion(requests[2]) == 1)
+            {
+                printf("correct version\n");
+            }
+            else
+            {
+                // 400
+                handleBadRequest(sd_current);
+                printf("incorrect version\n");
+            }
         }
+        else
+        {
+            handleBadRequest(sd_current);
+        }
+    }
 
 
 
@@ -157,7 +161,7 @@ int main(int argc, char *argv[])
         shutdown(sd, SHUT_RD);
     }
 
-    shutdown(sd_current, SHUT_RD);
+    //shutdown(sd_current, SHUT_RD);
     close(sd_current);
 
     exit(0);
@@ -233,4 +237,10 @@ FILE *checkFile(char *fileName)
 
 int validInputStr(char *input)
 {
+}
+
+void closeConnection(int sd){
+    //shutdown(sd_current, SHUT_RD);
+    close(sd);
+    exit(0);
 }
