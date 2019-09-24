@@ -111,44 +111,46 @@ int main(int argc, char *argv[])
             printf("%s\n", requests[i]);
         }
 
-        if(checkUnsuppotedMethod(sd_current, requests[0]) == 1) {
-            //501
+        if(checkUnsuppotedMethod(sd_current, requests[0]) == 0) {
+
+            if (strcmp(requests[0], "GET") == 0)
+            {
+                if (checkVersion(requests[2]) == 1)
+                {
+                    printf("correct version\n");
+                    handleGET(sd_current, requests[1]);
+                }
+                else
+                {
+                    // 400
+                    handleBadRequest(sd_current);
+                    printf("incorrect version\n");
+                }
+            }
+            else if (strcmp(requests[0], "HEAD") == 0)
+            {
+                if (checkVersion(requests[2]) == 1)
+                {
+                    printf("correct version\n");
+                }
+                else
+                {
+                    // 400
+                    handleBadRequest(sd_current);
+                    printf("incorrect version\n");
+                }
+            }
+            else
+            {
+                handleBadRequest(sd_current);
+                // 501
+                printf("501\n");
+            }
+        }
+            
         }
 
-        if (strcmp(requests[0], "GET") == 0)
-        {
-            if (checkVersion(requests[2]) == 1)
-            {
-                printf("correct version\n");
-                handleGET(sd_current, requests[1]);
-            }
-            else
-            {
-                // 400
-                handleBadRequest(sd_current);
-                printf("incorrect version\n");
-            }
-        }
-        else if (strcmp(requests[0], "HEAD") == 0)
-        {
-            if (checkVersion(requests[2]) == 1)
-            {
-                printf("correct version\n");
-            }
-            else
-            {
-                // 400
-                handleBadRequest(sd_current);
-                printf("incorrect version\n");
-            }
-        }
-        else
-        {
-            handleBadRequest(sd_current);
-            // 501
-            printf("501\n");
-        }
-    }
+
 
     if (forkID == 0)
     {
