@@ -22,10 +22,11 @@ char *rootDir = "../../www";
 int checkVersion(char *version);
 int handleGET(int sd, char *path);
 int handleBadRequest(int sd);
-FILE *checkFile(char *fileName);
+FILE *checkFile(int sd, char *fileName);
 int validInputStr(char *input);
 int checkUnsuppotedMethod(int sd, char* method);
 void closeConnection(int sd);
+void handleFileNotFound(int sd);
 
 int main(int argc, char *argv[])
 {
@@ -113,6 +114,7 @@ int main(int argc, char *argv[])
         }
         printf("Request counter: %d\n", requestCounter);
 
+        //TODO: Space after last request adds to requestCounter
         if (requestCounter > 3){
             handleBadRequest(sd_current);
             closeConnection(sd_current);
@@ -155,8 +157,6 @@ int main(int argc, char *argv[])
         }
     }
 
-
-
     if (forkID == 0)
     {
         shutdown(sd, SHUT_RD);
@@ -173,7 +173,7 @@ int handleGET(int sd, char *path)
     printf("%s\n", path);
     validInputStr(path);
     // Check if file exists
-    FILE *file = checkFile(path);
+    FILE *file = checkFile(sd, path);
     if (file)
     {
         // 200 File found
@@ -219,7 +219,7 @@ int checkUnsuppotedMethod(int sd,char* method){
     return 0;
 }
 
-FILE *checkFile(char *fileName)
+FILE *checkFile(int sd, char *fileName)
 {
     FILE *file;
     char path[MAX_PATH_STR] = "";
@@ -232,12 +232,19 @@ FILE *checkFile(char *fileName)
     }
     else
     {
+        handleFileNotFound(sd);
+        closeConnection(sd);
         return NULL;
     }
 }
 
 int validInputStr(char *input)
 {
+}
+
+void handleFileNotFound(int sd){
+    char fileContent[BUFSIZE] = "HTTP/1.0 404 Not Found\n\n";
+    send(sd, fileContent, strlen(fileContent), MSG_EOR);
 }
 
 void closeConnection(int sd){
