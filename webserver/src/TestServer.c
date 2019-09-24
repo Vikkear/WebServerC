@@ -27,6 +27,7 @@ int validInputStr(char *input);
 int checkUnsuppotedMethod(int sd, char* method);
 void closeConnection(int sd);
 void handleFileNotFound(int sd);
+void handleForbiddenRequest(int sd);
 
 int main(int argc, char *argv[])
 {
@@ -225,6 +226,13 @@ FILE *checkFile(int sd, char *fileName)
     char path[MAX_PATH_STR] = "";
     strncpy(path, rootDir, MAX_PATH_STR);
     strcat(path, fileName);
+
+    int rPermission = access(fileName, R_OK);
+
+    if (rPermission != 0){
+        handleForbiddenRequest(sd);
+    }
+
     file = fopen(path, "r");
     if (file)
     {
@@ -240,6 +248,11 @@ FILE *checkFile(int sd, char *fileName)
 
 int validInputStr(char *input)
 {
+}
+
+void handleForbiddenRequest(int sd){
+    char fileContent[BUFSIZE] = "HTTP/1.0 403 Forbidden\n\n";
+    send(sd, fileContent, strlen(fileContent), MSG_EOR);
 }
 
 void handleFileNotFound(int sd){
