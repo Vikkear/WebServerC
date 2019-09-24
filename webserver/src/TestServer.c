@@ -19,7 +19,7 @@ char unSupported[][7] = {"POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE",
 
 char *rootDir = "../../www";
 
-int handleRequest(int sd_current, char* buff);
+int handleRequest(int sd_current);
 int checkVersion(char *version);
 int handleGET(int sd, char *path);
 int handleBadRequest(int sd);
@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     struct sockaddr_in sin, pin;
     int sd, sd_current;
     int addrlen;
-    char buf[BUFSIZE] = "";
+
 
     // Command line options:
     // -h Print help text
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 
     if (forkID != 0)
     {
-        handleRequest(sd_current, buf);
+        handleRequest(sd_current);
     }
 
     if (forkID == 0)
@@ -114,9 +114,9 @@ int main(int argc, char *argv[])
     exit(0);
 }
 
-int handleRequest(int sd_current, char* buf){
+int handleRequest(int sd_current){
     /* receive at most sizeof(buf) many bytes and store them in the buffer */
-
+    char buf[BUFSIZE] = "";
     if (recv(sd_current, buf, sizeof(buf), 0) == -1)
     {
         DIE("recv");
