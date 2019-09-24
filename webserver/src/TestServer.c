@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
         char *requests[3];
         int requestCounter = 0;
 
-        while (request != NULL && requestCounter < 3)
+        while (request != NULL)
         {
             requests[requestCounter++] = request;
             request = strtok(NULL, delim);
@@ -111,13 +111,14 @@ int main(int argc, char *argv[])
         {
             printf("%s\n", requests[i]);
         }
+        printf("Request counter: %d\n", requestCounter);
 
         if (requestCounter > 3){
             handleBadRequest(sd_current);
             closeConnection(sd_current);
         }
 
-        if(checkUnsuppotedMethod(sd_current, requests[0]) == 0) {
+        if(checkUnsuppotedMethod(sd_current, requests[0]) == 1) {
             closeConnection(sd_current);
         }
 
@@ -240,7 +241,7 @@ int validInputStr(char *input)
 }
 
 void closeConnection(int sd){
-    //shutdown(sd_current, SHUT_RD);
+    //shutdown(sd, SHUT_RD);
     close(sd);
     exit(0);
 }
