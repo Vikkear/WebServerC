@@ -33,7 +33,7 @@ void printHelp();
 
 int main(int argc, char *argv[])
 {
-    int portnumber = NULL;
+    int portnumber = -1;
     struct sockaddr_in sin, pin;
     int sd, sd_current;
     int addrlen;
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (argc < 2 || portnumber != NULL){
+    if (argc < 2 || portnumber == -1){
         printHelp();
     }
 
@@ -284,6 +284,7 @@ void closeConnection(int sd){
 
 void printHelp(){
     printf("Usage: ./webserver [h|p]\n");
-    printf("-h\n\tPrint this help menu\n");
-    printf("-p <port>\n\tSelect which port to listen on\n");
+    printf("-h, Print this help menu\n");
+    printf("-p <port>, Select which port to listen on\n");
+    exit(0);
 }
