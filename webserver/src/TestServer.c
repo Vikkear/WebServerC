@@ -184,7 +184,7 @@ int handleGET(int sd, char *path)
     printf("%s\n", path);
     validInputStr(path);
     // Check if file exists
-    FILE *file = checkFile(sd, path);
+    FILE *file = checkFile(sd, realpath(rootDir, path));
     if (file)
     {
         // 200 File found
@@ -259,6 +259,7 @@ FILE *checkFile(int sd, char *fileName)
 
 int validInputStr(char *input)
 {
+
 }
 
 void handleForbiddenRequest(int sd){
