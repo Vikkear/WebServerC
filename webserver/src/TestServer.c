@@ -15,9 +15,11 @@
 #define BUFSIZE 512
 #define MAX_PATH_STR 80
 
-char unSupported[][7] = {"POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH"};
+char *unSupported[20] = {"POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH"};
 
-char *rootDir = "../../www";
+char *rootDirLink = "../../www";
+char rootDir[MAX_PATH_STR];
+
 
 int handleRequest(int sd_current);
 int checkVersion(char *version);
@@ -37,6 +39,8 @@ int main(int argc, char *argv[])
     struct sockaddr_in sin, pin;
     int sd, sd_current;
     int addrlen;
+    realpath(rootDirLink, rootDir);
+    printf("RootDir: %s", rootDir);
 
 
     // Command line options:
@@ -121,6 +125,7 @@ int handleRequest(int sd_current){
     {
         DIE("recv");
     }
+    buf[BUFSIZE-1] = '\0';
 
     printf("%s\n", buf);
     char delim[] = " ";
@@ -140,6 +145,15 @@ int handleRequest(int sd_current){
     }
     printf("Request counter: %d\n", requestCounter);
 
+    if(requestCounter < 3) {
+        handleBadRequest(sd_current);
+        closeConnection(sd_current);
+    }
+
+    if (strlen(requests[1]) >= MAX_PATH_STR){
+        handleBadRequest(sd_current);
+        closeConnection(sd_current);
+    }
 
     if(checkUnsuppotedMethod(sd_current, requests[0]) == 1) {
         closeConnection(sd_current);
@@ -183,13 +197,13 @@ int handleGET(int sd, char *path)
 {
     validInputStr(path);
     // Check if file exist
-    har fullPath[256];
+    char fullPath[256];
     strcpy(fullPath, rootDir);
     strcat(fullPath, path);
 
     char buf[1024];
     char *res = realpath(fullPath, buf);
-    FILE *file = checkFile(sd, path);
+    FILE *file = checkFile(sd, buf);
     if (file)
     {
         // 200 File found
@@ -240,6 +254,12 @@ FILE *checkFile(int sd, char *fileName)
     FILE *file;
     char path[MAX_PATH_STR] = "";
 
+    if (!strncmp(rootDir, fileName, strlen(rootDir)) == 0){
+        // Outside of root dir, 403
+        handleForbiddenRequest(sd);
+        closeConnection(sd);
+    }
+
     int rPermission = access(fileName, R_OK);
 
     file = fopen(fileName, "r");
@@ -266,7 +286,6 @@ int validInputStr(char *input)
 }
 
 void handleForbiddenRequest(int sd){
-    printf("Forbidden");
     char fileContent[BUFSIZE] = "HTTP/1.0 403 Forbidden\n\n";
     send(sd, fileContent, strlen(fileContent), MSG_EOR);
 }
