@@ -140,11 +140,6 @@ int handleRequest(int sd_current){
     }
     printf("Request counter: %d\n", requestCounter);
 
-    //TODO: Space after last request adds to requestCounter
-    if (requestCounter > 3){
-        handleBadRequest(sd_current);
-        closeConnection(sd_current);
-    }
 
     if(checkUnsuppotedMethod(sd_current, requests[0]) == 1) {
         closeConnection(sd_current);
@@ -244,12 +239,12 @@ FILE *checkFile(int sd, char *fileName)
 
     int rPermission = access(fileName, R_OK);
 
-    if (rPermission != 0){
+    file = fopen(path, "r");
+    if (rPermission != 0 && file){
         handleForbiddenRequest(sd);
         closeConnection(sd);
     }
 
-    file = fopen(path, "r");
     if (file)
     {
         return file;
@@ -267,6 +262,7 @@ int validInputStr(char *input)
 }
 
 void handleForbiddenRequest(int sd){
+    printf("Forbidden");
     char fileContent[BUFSIZE] = "HTTP/1.0 403 Forbidden\n\n";
     send(sd, fileContent, strlen(fileContent), MSG_EOR);
 }
