@@ -181,10 +181,15 @@ int handleRequest(int sd_current){
 
 int handleGET(int sd, char *path)
 {
-    printf("%s\n", path);
     validInputStr(path);
-    // Check if file exists
-    FILE *file = checkFile(sd, realpath(rootDir, path));
+    // Check if file exist
+    har fullPath[256];
+    strcpy(fullPath, rootDir);
+    strcat(fullPath, path);
+
+    char buf[1024];
+    char *res = realpath(fullPath, buf);
+    FILE *file = checkFile(sd, path);
     if (file)
     {
         // 200 File found
@@ -234,12 +239,10 @@ FILE *checkFile(int sd, char *fileName)
 {
     FILE *file;
     char path[MAX_PATH_STR] = "";
-    strncpy(path, rootDir, MAX_PATH_STR);
-    strcat(path, fileName);
 
     int rPermission = access(fileName, R_OK);
 
-    file = fopen(path, "r");
+    file = fopen(fileName, "r");
     if (rPermission != 0 && file){
         handleForbiddenRequest(sd);
         closeConnection(sd);
