@@ -8,6 +8,10 @@
 #include <unistd.h>
 #include <sys/errno.h>
 #include <arpa/inet.h>
+#include <time.h>
+#include <sys/stat.h>
+#include "../include/Handlers.h"
+#include "../include/Headers.h"
 
 #define DIE(str) \
     perror(str); \
@@ -15,22 +19,10 @@
 #define BUFSIZE 512
 #define MAX_PATH_STR 80
 
-char *unSupported[20] = {"POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH"};
-
 char *rootDirLink = "../../www";
 char rootDir[MAX_PATH_STR];
 
-
-int handleRequest(int sd_current);
-int checkVersion(char *version);
-int handleGET(int sd, char *path);
-int handleBadRequest(int sd);
-FILE *checkFile(int sd, char *fileName);
-int validInputStr(char *input);
-int checkUnsuppotedMethod(int sd, char* method);
 void closeConnection(int sd);
-void handleFileNotFound(int sd);
-void handleForbiddenRequest(int sd);
 void printHelp();
 
 int main(int argc, char *argv[])
@@ -40,8 +32,6 @@ int main(int argc, char *argv[])
     int sd, sd_current;
     int addrlen;
     realpath(rootDirLink, rootDir);
-    printf("RootDir: %s", rootDir);
-
 
     // Command line options:
     // -h Print help text
@@ -105,7 +95,7 @@ int main(int argc, char *argv[])
 
     if (forkID != 0)
     {
-        handleRequest(sd_current);
+        handleRequest(sd_current, rootDir);
     }
 
     if (forkID == 0)
@@ -113,190 +103,13 @@ int main(int argc, char *argv[])
         shutdown(sd, SHUT_RD);
     }
 
-    //shutdown(sd_current, SHUT_RD);
+    shutdown(sd_current, SHUT_WR);
     close(sd_current);
     exit(0);
 }
 
-int handleRequest(int sd_current){
-    /* receive at most sizeof(buf) many bytes and store them in the buffer */
-    char buf[BUFSIZE] = "";
-    if (recv(sd_current, buf, sizeof(buf), 0) == -1)
-    {
-        DIE("recv");
-    }
-    buf[BUFSIZE-1] = '\0';
-
-    printf("%s\n", buf);
-    char delim[] = " ";
-    char *request = strtok(buf, delim);
-    char *requests[3];
-    int requestCounter = 0;
-
-    while (request != NULL)
-    {
-        requests[requestCounter++] = request;
-        request = strtok(NULL, delim);
-    }
-
-    for (int i = 0; i < requestCounter; i++)
-    {
-        printf("%s\n", requests[i]);
-    }
-    printf("Request counter: %d\n", requestCounter);
-
-    if(requestCounter < 3) {
-        handleBadRequest(sd_current);
-        closeConnection(sd_current);
-    }
-
-    if (strlen(requests[1]) >= MAX_PATH_STR){
-        handleBadRequest(sd_current);
-        closeConnection(sd_current);
-    }
-
-    if(checkUnsuppotedMethod(sd_current, requests[0]) == 1) {
-        closeConnection(sd_current);
-    }
-
-    if (strcmp(requests[0], "GET") == 0)
-    {
-        if (checkVersion(requests[2]) == 1)
-        {
-            printf("correct version\n");
-            handleGET(sd_current, requests[1]);
-        }
-        else
-        {
-            // 400
-            handleBadRequest(sd_current);
-            printf("incorrect version\n");
-        }
-    }
-    else if (strcmp(requests[0], "HEAD") == 0)
-    {
-        if (checkVersion(requests[2]) == 1)
-        {
-            printf("correct version\n");
-        }
-        else
-        {
-            // 400
-            handleBadRequest(sd_current);
-            printf("incorrect version\n");
-        }
-    }
-    else
-    {
-        handleBadRequest(sd_current);
-    }
-    return 0;
-}
-
-int handleGET(int sd, char *path)
-{
-    validInputStr(path);
-    // Check if file exist
-    char fullPath[256];
-    strcpy(fullPath, rootDir);
-    strcat(fullPath, path);
-
-    char buf[1024];
-    char *res = realpath(fullPath, buf);
-    FILE *file = checkFile(sd, buf);
-    if (file)
-    {
-        // 200 File found
-        char tmpSTR[BUFSIZE] = "";
-        char fileContent[BUFSIZE] = "HTTP/1.0 200 ok\nContent-type: text/html\n\n";
-        while (fgets(tmpSTR, BUFSIZE, file) != NULL)
-        {
-            strcat(fileContent, tmpSTR);
-        }
-        send(sd, fileContent, strlen(fileContent), MSG_EOR);
-        //sendfile(sd, fileno(file), NULL, BUFSIZE);
-    }
-    else
-    {
-        // 404 File not found
-    }
-}
-
-int handleBadRequest(int sd) {
-    char fileContent[BUFSIZE] = "HTTP/1.0 400 Bad Request\n";
-    send(sd, fileContent, strlen(fileContent), MSG_EOR);
-}
-
-int checkVersion(char *version)
-{
-    //NOTE: If client doesn't add newline version can get fucked
-    if (strstr(version, "HTTP/1.0") != NULL)
-    {
-        return 1;
-    }
-    return 0;
-}
-
-int checkUnsuppotedMethod(int sd,char* method){
-    // Check if unsupported method
-    for(int i = 0; i < 7; i++){
-        if(strcmp(method, unSupported[i]) == 0){
-            char fileContent[BUFSIZE] = "HTTP/1.0 501 Not Implemented\n\n";
-            send(sd, fileContent, strlen(fileContent), MSG_EOR);
-            return 1;
-        }
-    }
-    return 0;
-}
-
-FILE *checkFile(int sd, char *fileName)
-{
-    FILE *file;
-    char path[MAX_PATH_STR] = "";
-
-    if (!strncmp(rootDir, fileName, strlen(rootDir)) == 0){
-        // Outside of root dir, 403
-        handleForbiddenRequest(sd);
-        closeConnection(sd);
-    }
-
-    int rPermission = access(fileName, R_OK);
-
-    file = fopen(fileName, "r");
-    if (rPermission != 0 && file){
-        handleForbiddenRequest(sd);
-        closeConnection(sd);
-    }
-
-    if (file)
-    {
-        return file;
-    }
-    else
-    {
-        handleFileNotFound(sd);
-        closeConnection(sd);
-        return NULL;
-    }
-}
-
-int validInputStr(char *input)
-{
-
-}
-
-void handleForbiddenRequest(int sd){
-    char fileContent[BUFSIZE] = "HTTP/1.0 403 Forbidden\n\n";
-    send(sd, fileContent, strlen(fileContent), MSG_EOR);
-}
-
-void handleFileNotFound(int sd){
-    char fileContent[BUFSIZE] = "HTTP/1.0 404 Not Found\n\n";
-    send(sd, fileContent, strlen(fileContent), MSG_EOR);
-}
-
 void closeConnection(int sd){
-    //shutdown(sd, SHUT_RD);
+    shutdown(sd, SHUT_WR);
     close(sd);
     exit(0);
 }
