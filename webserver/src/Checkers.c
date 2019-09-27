@@ -1,4 +1,6 @@
 #include "../include/Checkers.h"
+#include "../include/Headers.h"
+
 
 char *unSupported[20] = {"POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH"};
 
@@ -18,8 +20,9 @@ int checkUnsuppotedMethod(int sd,char* method){
     for(int i = 0; i < 7; i++){
         if(strcmp(method, unSupported[i]) == 0){
             char fileContent[BUFSIZE] = "";
-            generateHeader(501, fileContent, sizeof(fileContent));
-            send(sd, fileContent, strlen(fileContent), MSG_EOR);
+            char *path = "../../www/NotImplemented.html";
+            generateHeader(501, path, fileContent, sizeof(fileContent));
+            sendWithFile(sd, fileContent, path);
             return 1;
         }
     }

@@ -91,7 +91,7 @@ int handleGET(int sd, char *rootDir, char *path)
     {
         char fileContent[BUFSIZE] = "";
         char tmpSTR[BUFSIZE] = "";
-        fgenerateHeader(file, 200, buf, fileContent, sizeof(fileContent));
+        generateHeader(200, buf, fileContent, sizeof(fileContent));
 
         while (fgets(tmpSTR, BUFSIZE, file) != NULL)
         {
@@ -118,7 +118,7 @@ int handleHEAD(int sd, char* rootDir , char *path){
     if (file)
     {
         char header[BUFSIZE] = "";
-        fgenerateHeader(file, 200, buf, header, sizeof(header));
+        generateHeader(200, buf, header, sizeof(header));
         send(sd, header, strlen(header), MSG_EOR);
     }
     else
@@ -128,18 +128,36 @@ int handleHEAD(int sd, char* rootDir , char *path){
 }
 
 int handleBadRequest(int sd) {
-    char fileContent[BUFSIZE] = "HTTP/1.0 400 Bad Request\n";
-    send(sd, fileContent, strlen(fileContent), MSG_EOR);
+    char fileContent[BUFSIZE] = "";
+    char* path = "../../www/handleBadRequest.html";
+    generateHeader(400, path, fileContent, sizeof(fileContent));
+    sendWithFile(sd, fileContent, path);
+
+}
+
+void sendWithFile(int sd, char* fileContent, char* path){
+    char tmpSTR[BUFSIZE] = "";
+    FILE* file = fopen(path, "r");
+    if(file){
+        while (fgets(tmpSTR, BUFSIZE, file) != NULL)
+        {
+            strncat(fileContent, tmpSTR, sizeof(fileContent));
+        }
+        send(sd, fileContent, strlen(fileContent), MSG_EOR);
+        fclose(file);
+    }
 }
 
 void handleForbiddenRequest(int sd){
     char fileContent[BUFSIZE] = "";
-    generateHeader(403, fileContent, sizeof(fileContent));
-    send(sd, fileContent, strlen(fileContent), MSG_EOR);
+    char* path = "../../www/Forbidden.html";
+    generateHeader(403, path, fileContent, sizeof(fileContent));
+    sendWithFile(sd, fileContent, path);
 }
 
 void handleFileNotFound(int sd){
     char fileContent[BUFSIZE] = "";
-    generateHeader(404, fileContent, sizeof(fileContent));
-    send(sd, fileContent, strlen(fileContent), MSG_EOR);
+    char* path = "../../www/NotFound.html";
+    generateHeader(404, path, fileContent, sizeof(fileContent));
+    sendWithFile(sd, fileContent, path);
 }
