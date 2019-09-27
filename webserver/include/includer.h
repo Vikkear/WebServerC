@@ -1,5 +1,5 @@
-#ifndef TEST
-#define TEST
+#ifndef INCLUDER
+#define INCLUDER
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -13,19 +13,11 @@
 #include <arpa/inet.h>
 #include <time.h>
 #include <sys/stat.h>
-#include "../include/Handlers.h"
-#include "../include/Headers.h"
 
 #define DIE(str) \
     perror(str); \
     exit(-1);
 
 void closeConnection(int sd);
-
-void closeConnection(int sd){
-    shutdown(sd, SHUT_WR);
-    close(sd);
-    exit(0);
-}
 
 #endif

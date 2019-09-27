@@ -1,7 +1,9 @@
 #ifndef CHECKERS
 #define CHECKERS
 
-#include "test.h"
+#include "includer.h"
+#include "Headers.h"
+#include "Handlers.h"
 
 #define BUFSIZE 512
 #define MAX_PATH_STR 80
