@@ -20,4 +20,12 @@
     perror(str); \
     exit(-1);
 
+void closeConnection(int sd);
+
+void closeConnection(int sd){
+    shutdown(sd, SHUT_WR);
+    close(sd);
+    exit(0);
+}
+
 #endif

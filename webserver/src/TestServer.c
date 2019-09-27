@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include "../include/Handlers.h"
 #include "../include/Headers.h"
+#include "../include/Checkers.h"
 
 #define DIE(str) \
     perror(str); \
@@ -22,7 +23,7 @@
 char *rootDirLink = "../../www";
 char rootDir[MAX_PATH_STR];
 
-void closeConnection(int sd);
+
 void printHelp();
 
 int main(int argc, char *argv[])
@@ -105,12 +106,6 @@ int main(int argc, char *argv[])
 
     shutdown(sd_current, SHUT_WR);
     close(sd_current);
-    exit(0);
-}
-
-void closeConnection(int sd){
-    shutdown(sd, SHUT_WR);
-    close(sd);
     exit(0);
 }
 

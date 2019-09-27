@@ -3,7 +3,6 @@
 
 #include "test.h"
 
-
 #define BUFSIZE 512
 #define MAX_PATH_STR 80
 

@@ -1,4 +1,5 @@
 #include "../include/Handlers.h"
+#include "../include/Checkers.h"
 
 int handleRequest(int sd_current, char* rootDir){
     /* receive at most sizeof(buf) many bytes and store them in the buffer */
@@ -85,7 +86,7 @@ int handleGET(int sd, char *rootDir, char *path)
 
     char buf[1024];
     char *res = realpath(fullPath, buf);
-    FILE *file = checkFile(sd, buf);
+    FILE *file = checkFile(sd, rootDir , buf);
     if (file)
     {
         char fileContent[BUFSIZE] = "";
@@ -113,13 +114,11 @@ int handleHEAD(int sd, char* rootDir , char *path){
 
     char buf[1024];
     char *res = realpath(fullPath, buf);
-    FILE *file = checkFile(sd, buf);
+    FILE *file = checkFile(sd, rootDir, buf);
     if (file)
     {
         char header[BUFSIZE];
         fgenerateHeader(file, 200, buf, header, sizeof(header));
-
-
     }
     else
     {
