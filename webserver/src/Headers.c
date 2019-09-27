@@ -55,4 +55,6 @@ void generateHeader(int code, char* path, char* header, int size) {
     strncat(header, contentType, size);
     strncat(header, connectionType, size);
 
+    fclose(file);
+
 }

@@ -136,13 +136,15 @@ int handleBadRequest(int sd) {
 }
 
 void sendWithFile(int sd, char* fileContent, char* path){
+
+    FILE* file = fopen(path,"r");
     char tmpSTR[BUFSIZE] = "";
-    FILE* file = fopen(path, "r");
     if(file){
         while (fgets(tmpSTR, BUFSIZE, file) != NULL)
         {
             strncat(fileContent, tmpSTR, sizeof(fileContent));
         }
+        printf("%d\n", strlen(fileContent));
         send(sd, fileContent, strlen(fileContent), MSG_EOR);
         fclose(file);
     }
