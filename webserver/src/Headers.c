@@ -25,7 +25,7 @@ void generateHeader(int code, char* header, int size){
     char date[MAX_PATH_STR] = "";
     time_t t = time(NULL);
     struct tm tm = *gmtime(&t);
-    strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z\r\n", &tm);
+    strftime(date, sizeof(date), "Date: %a, %d %b %Y %H:%M:%S %Z\r\n", &tm);
     char* serverName = "Server: Lupuche/1338 (UNOX) (Green-Hat/LUNOX)\r\n";
     char* connectionType = "Connection: close\r\n\r\n";
 
@@ -60,27 +60,31 @@ void fgenerateHeader(FILE* file, int code, char* path, char* header, int size) {
     char date[MAX_PATH_STR] = "";
     time_t t = time(NULL);
     struct tm tm = *gmtime(&t);
-    strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z\r\n", &tm);
+    strftime(date, sizeof(date), "Date: %a, %d %b %Y %H:%M:%S %Z\r\n", &tm);
 
     char * contentType = "Content-Type: text/html; charset=UTF-8\r\n";
 
     fseek(file, 0L, SEEK_END);
     long fileLength = ftell(file);
+    char contentLength[MAX_PATH_STR] = "";
+    snprintf(contentLength, sizeof(contentLength),"Content-Length: %ld\r\n", fileLength);
+
     rewind(file);
 
     char lastMod[MAX_PATH_STR] = "";
     struct stat attrib;
     stat(path, &attrib);
-    strftime(lastMod, sizeof(lastMod), "%a, %d %b %Y %H:%M:%S %Z\r\n", gmtime(&(attrib.st_ctime)));
+    strftime(lastMod, sizeof(lastMod), "Last-Modified: %a, %d %b %Y %H:%M:%S %Z\r\n", gmtime(&(attrib.st_ctime)));
 
     char* serverName = "Server: Lupuche/1338 (UNOX) (Green-Hat/LUNOX)\r\n";
     char* connectionType = "Connection: close\r\n\r\n";
 
     strncat(header, responseCode, size);
     strncat(header, date, size);
-    strncat(header, contentType, size);
-    strncat(header, lastMod, size);
     strncat(header, serverName, size);
+    strncat(header, lastMod, size);
+    strncat(header, contentLength, size);
+    strncat(header, contentType, size);
     strncat(header, connectionType, size);
 
 }

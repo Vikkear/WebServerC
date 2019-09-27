@@ -117,8 +117,9 @@ int handleHEAD(int sd, char* rootDir , char *path){
     FILE *file = checkFile(sd, rootDir, buf);
     if (file)
     {
-        char header[BUFSIZE];
+        char header[BUFSIZE] = "";
         fgenerateHeader(file, 200, buf, header, sizeof(header));
+        send(sd, header, strlen(header), MSG_EOR);
     }
     else
     {
