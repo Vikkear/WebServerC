@@ -1,3 +1,3 @@
-rootdir="/home/victor/WebServerC-master/www"
+rootdir="/mnt/c/Users/vikke/Documents/GitHub/WebServerC/www"
 port="6001"
 requestHandling="fork"

@@ -26,7 +26,6 @@ int main(int argc, char *argv[])
     realpath(rootDirLink, rootDir);
 
     loadConfig();
-
     // Command line options:
     // -h Print help text
     // "-p port" Listen to port number "port"
@@ -121,8 +120,10 @@ void loadConfig(){
     {
         if(strncmp("rootdir", tmpSTR, 6) == 0){
             char* test = strchr(tmpSTR, '\"');
+            char linkDir[MAX_PATH_STR] = "";
             memset(rootDir,0,strlen(rootDir));
-            strncpy(rootDir, &test[1], (strlen(test) < MAX_PATH_STR) ? strlen(test)-3 : MAX_PATH_STR);
+            strncpy(linkDir, &test[1], (strlen(test) < MAX_PATH_STR) ? strlen(test)-3 : MAX_PATH_STR);
+            realpath(linkDir, rootDir);
         }
         if(strncmp("port", tmpSTR, 4) == 0){
 
