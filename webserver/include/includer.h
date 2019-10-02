@@ -2,8 +2,7 @@
 #define INCLUDER
 
 #define BUFSIZE 65535
-#define MAX_PATH_STR 80
-
+#define MAX_PATH_STR 256
 
 #include <sys/types.h>
 #include <sys/socket.h>
