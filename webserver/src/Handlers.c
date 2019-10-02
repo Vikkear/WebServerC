@@ -129,7 +129,7 @@ int handleHEAD(int sd, char* rootDir , char *path){
 
 int handleBadRequest(int sd) {
     char fileContent[BUFSIZE] = "";
-    char* path = "../../www/handleBadRequest.html";
+    char* path = "../../www/BadRequest.html";
     generateHeader(400, path, fileContent, sizeof(fileContent));
     sendWithFile(sd, fileContent, path);
 
@@ -142,7 +142,7 @@ void sendWithFile(int sd, char* fileContent, char* path){
     if(file){
         while (fgets(tmpSTR, BUFSIZE, file) != NULL)
         {
-            strncat(fileContent, tmpSTR, sizeof(fileContent));
+            strncat(fileContent, tmpSTR, BUFSIZE - strlen(fileContent) - 1);
         }
         printf("%d\n", strlen(fileContent));
         send(sd, fileContent, strlen(fileContent), MSG_EOR);

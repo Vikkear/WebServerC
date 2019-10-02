@@ -1,8 +1,6 @@
 #ifndef HANDLERS
 #define HANDLERS
 
-#define BUFSIZE 512
-#define MAX_PATH_STR 80
 #include "includer.h"
 
 int handleRequest(int sd_current, char* rootDir);

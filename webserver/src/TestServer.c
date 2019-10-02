@@ -1,15 +1,4 @@
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <stdio.h>
-#include <netdb.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/errno.h>
-#include <arpa/inet.h>
-#include <time.h>
-#include <sys/stat.h>
+#include "../include/includer.h"
 #include "../include/Handlers.h"
 #include "../include/Headers.h"
 #include "../include/Checkers.h"
@@ -17,8 +6,6 @@
 #define DIE(str) \
     perror(str); \
     exit(-1);
-#define BUFSIZE 512
-#define MAX_PATH_STR 80
 
 char *rootDirLink = "../../www";
 char rootDir[MAX_PATH_STR];
