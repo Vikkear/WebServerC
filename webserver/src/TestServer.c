@@ -10,6 +10,9 @@
 char *rootDirLink = "../../www";
 char rootDir[MAX_PATH_STR];
 
+int amountOfArguments = 2;
+char *commandList[] = {"-p", "-h"};
+
 
 void printHelp();
 
@@ -26,9 +29,20 @@ int main(int argc, char *argv[])
     // "-p port" Listen to port number "port"
 
     for(int i = 1; i < argc; i++){
+        int argcheck = 0;
+        for (int j = 0; j < amountOfArguments; j++){
+            if(strncmp(argv[i], commandList[j], 2) == 0){
+                argcheck = 1;
+            }
+        }
+        if(argcheck == 0) printHelp();
+
         if(strcmp(argv[i], "-h") == 0) printHelp();
         if(strcmp(argv[i], "-p") == 0){
-            if(i+1 < argc) portnumber = atoi(argv[i+1]);
+            if(i+1 < argc) {
+                i++;
+                portnumber = atoi(argv[i]);
+            }
         }
     }
 

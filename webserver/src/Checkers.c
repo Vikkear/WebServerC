@@ -42,12 +42,12 @@ FILE *checkFile(int sd, char* rootDir, char *fileName)
 
     int rPermission = access(fileName, R_OK);
 
-    file = fopen(fileName, "r");
-    if (rPermission != 0 && file){
+    if (rPermission != 0 && access(fileName, F_OK) == 0){
         handleForbiddenRequest(sd);
         closeConnection(sd);
     }
 
+    file = fopen(fileName, "r");
     if (file)
     {
         return file;

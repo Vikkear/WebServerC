@@ -1,6 +1,8 @@
 #include "../include/Handlers.h"
 #include "../include/Checkers.h"
 
+#define REQUEST_SIZE 64
+
 int handleRequest(int sd_current, char* rootDir){
     /* receive at most sizeof(buf) many bytes and store them in the buffer */
     char buf[BUFSIZE] = "";
@@ -13,10 +15,10 @@ int handleRequest(int sd_current, char* rootDir){
     printf("%s\n", buf);
     char delim[] = " ";
     char *request = strtok(buf, delim);
-    char *requests[3];
+    char *requests[REQUEST_SIZE];
     int requestCounter = 0;
 
-    while (request != NULL)
+    while (request != NULL && requestCounter < REQUEST_SIZE)
     {
         requests[requestCounter++] = request;
         request = strtok(NULL, delim);
@@ -25,15 +27,14 @@ int handleRequest(int sd_current, char* rootDir){
     for (int i = 0; i < requestCounter; i++)
     {
         printf("%s\n", requests[i]);
+        if(strlen(requests[i]) >= MAX_PATH_STR){
+            handleBadRequest(sd_current);
+            closeConnection(sd_current);
+        }
     }
     printf("Request counter: %d\n", requestCounter);
 
     if(requestCounter < 3) {
-        handleBadRequest(sd_current);
-        closeConnection(sd_current);
-    }
-
-    if (strlen(requests[1]) >= MAX_PATH_STR){
         handleBadRequest(sd_current);
         closeConnection(sd_current);
     }
@@ -80,7 +81,7 @@ int handleRequest(int sd_current, char* rootDir){
 int handleGET(int sd, char *rootDir, char *path)
 {
     // Check if file exist
-    char fullPath[256];
+    char fullPath[MAX_PATH_STR];
     strcpy(fullPath, rootDir);
     strcat(fullPath, path);
 
@@ -108,7 +109,7 @@ int handleGET(int sd, char *rootDir, char *path)
 
 int handleHEAD(int sd, char* rootDir , char *path){
     // Check if file exist
-    char fullPath[256];
+    char fullPath[MAX_PATH_STR];
     strcpy(fullPath, rootDir);
     strcat(fullPath, path);
 
