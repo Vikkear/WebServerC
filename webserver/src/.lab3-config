@@ -1,0 +1,3 @@
+rootdir="/home/victor/WebServerC-master/www"
+port="6001"
+requestHandling="fork"

@@ -13,16 +13,19 @@ char rootDir[MAX_PATH_STR];
 int amountOfArguments = 2;
 char *commandList[] = {"-p", "-h"};
 
+int portnumber = -1;
 
+void loadConfig();
 void printHelp();
 
 int main(int argc, char *argv[])
 {
-    int portnumber = -1;
     struct sockaddr_in sin, pin;
     int sd, sd_current;
     int addrlen;
     realpath(rootDirLink, rootDir);
+
+    loadConfig();
 
     // Command line options:
     // -h Print help text
@@ -108,6 +111,30 @@ int main(int argc, char *argv[])
     shutdown(sd_current, SHUT_WR);
     close(sd_current);
     exit(0);
+}
+
+void loadConfig(){
+    char tmpSTR[MAX_PATH_STR] = "";
+    FILE* file = fopen("../src/.lab3-config", "r");
+
+    while (fgets(tmpSTR, MAX_PATH_STR, file) != NULL)
+    {
+        if(strncmp("rootdir", tmpSTR, 6) == 0){
+            char* test = strchr(tmpSTR, '\"');
+            memset(rootDir,0,strlen(rootDir));
+            strncpy(rootDir, &test[1], (strlen(test) < MAX_PATH_STR) ? strlen(test)-3 : MAX_PATH_STR);
+        }
+        if(strncmp("port", tmpSTR, 4) == 0){
+
+            char* test = strchr(tmpSTR, '\"');
+            char intChar[MAX_PATH_STR] = "";
+            strncpy(intChar, &test[1], (strlen(test) < MAX_PATH_STR) ? strlen(test)-3 : MAX_PATH_STR);
+            portnumber = atoi(intChar);
+        }
+        if(strncmp("requestHandling", tmpSTR, 15) == 0){
+            printf("Not implemented\n");
+        }
+    }
 }
 
 void printHelp(){

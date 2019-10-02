@@ -145,7 +145,6 @@ void sendWithFile(int sd, char* fileContent, char* path){
         {
             strncat(fileContent, tmpSTR, BUFSIZE - strlen(fileContent) - 1);
         }
-        printf("%d\n", strlen(fileContent));
         send(sd, fileContent, strlen(fileContent), MSG_EOR);
         fclose(file);
     }
