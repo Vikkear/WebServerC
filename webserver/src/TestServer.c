@@ -3,6 +3,11 @@
 #include "../include/Headers.h"
 #include "../include/Checkers.h"
 
+#include <signal.h>
+#include <sys/resource.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 #define DIE(str) \
     perror(str); \
     exit(-1);
@@ -10,11 +15,12 @@
 char *rootDirLink = "../../www";
 char rootDir[MAX_PATH_STR];
 
-int amountOfArguments = 2;
-char *commandList[] = {"-p", "-h"};
+int amountOfArguments = 3;
+char *commandList[] = {"-p", "-h", "-d"};
 
 int portnumber = -1;
 
+void daemonize();
 void loadConfig();
 void printHelp();
 
@@ -40,6 +46,7 @@ int main(int argc, char *argv[])
         if(argcheck == 0) printHelp();
 
         if(strcmp(argv[i], "-h") == 0) printHelp();
+        if(strcmp(argv[i], "-d") == 0) daemonize();
         if(strcmp(argv[i], "-p") == 0){
             if(i+1 < argc) {
                 i++;
@@ -47,12 +54,6 @@ int main(int argc, char *argv[])
             }
         }
     }
-
-    if (argc < 2 || portnumber == -1){
-        printHelp();
-    }
-
-    //portnumber = atoi(argv[1]);
 
     if ((sd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
@@ -136,11 +137,53 @@ void loadConfig(){
             printf("Not implemented\n");
         }
     }
+    fclose(file);
+}
+
+void daemonize(){
+
+    struct sigaction sa;
+    struct rlimit r1;
+    int fd0, fd1, fd2;
+
+    umask(0);
+    pid_t pid = fork();
+
+    if(pid != 0){
+        exit(0);
+    }
+    setsid();
+
+    printf("PID: %d\n", getpid());
+
+    sa.sa_handler = SIG_IGN;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sigaction(SIGHUP, &sa, NULL);
+
+    chdir("/");
+
+    if(getrlimit(RLIMIT_NOFILE, &r1)){
+        perror(NULL);
+    }
+
+
+    if(r1.rlim_max == RLIM_INFINITY){
+        r1.rlim_max = 1024;
+    }
+
+    for(int i = 0; i < r1.rlim_max; i++)
+        close(i);
+
+    fd0 = open("/dev/null", O_RDWR);
+    fd1 = dup(0);
+    fd2 = dup(0);
 }
 
 void printHelp(){
-    printf("Usage: ./webserver [h|p]\n");
+    printf("Usage: ./webserver [h|p|d]\n");
     printf("-h, Print this help menu\n");
     printf("-p <port>, Select which port to listen on\n");
+    printf("-d, Run the server as a daemon\n");
     exit(0);
 }
