@@ -15,14 +15,11 @@ int checkVersion(char *version)
     return 0;
 }
 
-int checkUnsuppotedMethod(int sd,char* method){
+int checkUnsuppotedMethod(int sd, char* method, char* rootDir){
     // Check if unsupported method
     for(int i = 0; i < 7; i++){
         if(strcmp(method, unSupported[i]) == 0){
-            char fileContent[BUFSIZE] = "";
-            char *path = "../../www/NotImplemented.html";
-            generateHeader(501, path, fileContent, sizeof(fileContent));
-            sendWithFile(sd, fileContent, path);
+            handleNotImplemented(sd, rootDir);
             return 1;
         }
     }

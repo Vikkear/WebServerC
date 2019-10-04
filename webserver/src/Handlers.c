@@ -39,7 +39,7 @@ int handleRequest(int sd_current, char* rootDir){
         closeConnection(sd_current);
     }
 
-    if(checkUnsuppotedMethod(sd_current, requests[0]) == 1) {
+    if(checkUnsuppotedMethod(sd_current, requests[0], rootDir) == 1) {
         closeConnection(sd_current);
     }
 
@@ -80,31 +80,11 @@ int handleRequest(int sd_current, char* rootDir){
 
 int handleGET(int sd, char *rootDir, char *path)
 {
-    // Check if file exist
-    char fullPath[MAX_PATH_STR];
-    strcpy(fullPath, rootDir);
-    strcat(fullPath, path);
+    char fileContent[BUFSIZE] = "";
+    strncat(rootDir, path);
+    generateHeader(200, rootDir, fileContent, sizeof(fileContent));
+    sendWithFile(sd, fileContent, rootDir);
 
-    char buf[1024];
-    char *res = realpath(fullPath, buf);
-    FILE *file = checkFile(sd, rootDir , buf);
-    if (file)
-    {
-        char fileContent[BUFSIZE] = "";
-        char tmpSTR[BUFSIZE] = "";
-        generateHeader(200, buf, fileContent, sizeof(fileContent));
-
-        while (fgets(tmpSTR, BUFSIZE, file) != NULL)
-        {
-            strncat(fileContent, tmpSTR, sizeof(fileContent));
-        }
-        send(sd, fileContent, strlen(fileContent), MSG_EOR);
-
-    }
-    else
-    {
-        handleFileNotFound(sd, rootDir);
-    }
 }
 
 int handleHEAD(int sd, char* rootDir , char *path){
@@ -128,22 +108,16 @@ int handleHEAD(int sd, char* rootDir , char *path){
     }
 }
 
-int handleBadRequest(int sd, char* rootDir) {
-    char fileContent[BUFSIZE] = "";
-    char* fileName = "/BadRequest.html";
-    char path[MAX_PATH_STR] = "";
-    strncat(path, rootDir, BUFSIZE - strlen(path) - 1);
-    strncat(path, fileName, BUFSIZE - strlen(path) - 1);
 
-    generateHeader(400, path, fileContent, sizeof(fileContent));
-    sendWithFile(sd, fileContent, path);
+void sendWithFile(int sd, char* fileContent, char* fullPath){
 
-}
+    //FILE* file = fopen(path,"r");
+    //char tmpSTR[BUFSIZE] = "";
+    // Check if file exist
 
-void sendWithFile(int sd, char* fileContent, char* path){
-
-    FILE* file = fopen(path,"r");
-    char tmpSTR[BUFSIZE] = "";
+    char buf[1024];
+    char *res = realpath(fullPath, buf);
+    FILE *file = checkFile(sd, rootDir , buf);
     if(file){
         while (fgets(tmpSTR, BUFSIZE, file) != NULL)
         {
@@ -151,28 +125,38 @@ void sendWithFile(int sd, char* fileContent, char* path){
         }
         send(sd, fileContent, strlen(fileContent), MSG_EOR);
         fclose(file);
+    } else {
+        handleFileNotFound(sd, rootDir);
     }
 }
 
-void handleForbiddenRequest(int sd, char* rootDir){
-    char fileContent[BUFSIZE] = "";
-    char* fileName = "/Forbidden.html";
-    char path[MAX_PATH_STR] = "";
-    strncat(path, rootDir, BUFSIZE - strlen(path) - 1);
-    strncat(path, fileName, BUFSIZE - strlen(path) - 1);
+int handleBadRequest(int sd, char* rootDir) {
+    handleFaultyRequest(sd, rootDir, 400, "/BadRequest.html");
+}
 
-    generateHeader(403, path, fileContent, sizeof(fileContent));
-    sendWithFile(sd, fileContent, path);
+void handleForbiddenRequest(int sd, char* rootDir){
+    handleFaultyRequest(sd, rootDir, 403, "/Forbidden.html");
 }
 
 void handleFileNotFound(int sd, char* rootDir){
+    handleFaultyRequest(sd, rootDir, 404, "/NotFound.html");
+}
+
+void handleNotImplemented(int sd, char* rootDir){
+    handleFaultyRequest(sd, rootDir, 501, "/NotImplemented.html");
+}
+
+void handleInternalServerError(int sd, char* rootDir){
+    handleFaultyRequest(sd, rootDir, 500, "/InternalServerError.html");
+}
+
+void handleFaultyRequest(int sd, char* rootDir, int code, char* fileName){
     char fileContent[BUFSIZE] = "";
-    char* fileName = "/NotFound.html";
     char path[MAX_PATH_STR] = "";
     strncat(path, rootDir, BUFSIZE - strlen(path) - 1);
     strncat(path, fileName, BUFSIZE - strlen(path) - 1);
 
-    generateHeader(404, path, fileContent, sizeof(fileContent));
+    generateHeader(501, path, fileContent, sizeof(fileContent));
     sendWithFile(sd, fileContent, path);
 }
 //TODO: ADD INTERNAL SERVER ERROR!!!!!!
