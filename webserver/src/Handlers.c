@@ -90,10 +90,12 @@ int handleGET(int sd, char *rootDir, char *path)
     sendWithFile(sd, fileContent, rootDir, path);
 
     char logMessage[LOGSIZE] = "";
-    char ip[16] = "";
     struct sockaddr_in addr;
-    getsockname(sd, (struct sockaddr *) &addr, sizeof(addr));
-    inet_ntop(AF_INET, &addr.sin_addr, ip, sizeof(ip));
+    socklen_t addr_size = sizeof(struct sockaddr_in);
+    int res = getpeername(sd, (struct sockaddr *)&addr, &addr_size);
+    char ip[20];
+    strcpy(ip, inet_ntoa(addr.sin_addr));
+    printf("%s\n", ip);
 
     char dateString[MAX_PATH_STR] = "";
     time_t t = time(NULL);
@@ -102,7 +104,7 @@ int handleGET(int sd, char *rootDir, char *path)
 
     char requestString[MAX_PATH_STR] = "";
 
-    fprintf(logMessage, "%s - - %s %s %d %d\n", ip, dateString, requestString, 200, 10);
+    sprintf(logMessage, "%s - - %s %s %d %d\n", ip, dateString, requestString, 200, 10);
     if(useSyslog){
         syslog(LOG_INFO, logMessage);
     }
