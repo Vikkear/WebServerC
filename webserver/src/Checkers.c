@@ -36,14 +36,14 @@ FILE *checkFile(int sd, char* rootDir, char *fileName)
 
     if (!strncmp(rootDir, fileName, strlen(rootDir)) == 0){
         // Outside of root dir, 403
-        handleForbiddenRequest(sd);
+        handleForbiddenRequest(sd, rootDir);
         closeConnection(sd);
     }
 
     int rPermission = access(fileName, R_OK);
 
     if (rPermission != 0 && access(fileName, F_OK) == 0){
-        handleForbiddenRequest(sd);
+        handleForbiddenRequest(sd, rootDir);
         closeConnection(sd);
     }
 
@@ -54,7 +54,7 @@ FILE *checkFile(int sd, char* rootDir, char *fileName)
     }
     else
     {
-        handleFileNotFound(sd);
+        handleFileNotFound(sd, rootDir);
         closeConnection(sd);
         return NULL;
     }

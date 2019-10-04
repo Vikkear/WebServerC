@@ -28,14 +28,14 @@ int handleRequest(int sd_current, char* rootDir){
     {
         printf("%s\n", requests[i]);
         if(strlen(requests[i]) >= MAX_PATH_STR){
-            handleBadRequest(sd_current);
+            handleBadRequest(sd_current, rootDir);
             closeConnection(sd_current);
         }
     }
     printf("Request counter: %d\n", requestCounter);
 
     if(requestCounter < 3) {
-        handleBadRequest(sd_current);
+        handleBadRequest(sd_current, rootDir);
         closeConnection(sd_current);
     }
 
@@ -53,7 +53,7 @@ int handleRequest(int sd_current, char* rootDir){
         else
         {
             // 400
-            handleBadRequest(sd_current);
+            handleBadRequest(sd_current, rootDir);
             printf("incorrect version\n");
         }
     }
@@ -67,13 +67,13 @@ int handleRequest(int sd_current, char* rootDir){
         else
         {
             // 400
-            handleBadRequest(sd_current);
+            handleBadRequest(sd_current, rootDir);
             printf("incorrect version\n");
         }
     }
     else
     {
-        handleBadRequest(sd_current);
+        handleBadRequest(sd_current, rootDir);
     }
     return 0;
 }
@@ -103,7 +103,7 @@ int handleGET(int sd, char *rootDir, char *path)
     }
     else
     {
-        handleFileNotFound(sd);
+        handleFileNotFound(sd, rootDir);
     }
 }
 
@@ -124,13 +124,17 @@ int handleHEAD(int sd, char* rootDir , char *path){
     }
     else
     {
-        handleFileNotFound(sd);
+        handleFileNotFound(sd, rootDir);
     }
 }
 
-int handleBadRequest(int sd) {
+int handleBadRequest(int sd, char* rootDir) {
     char fileContent[BUFSIZE] = "";
-    char* path = "../../www/BadRequest.html";
+    char* fileName = "/BadRequest.html";
+    char path[MAX_PATH_STR] = "";
+    strncat(path, rootDir, BUFSIZE - strlen(path) - 1);
+    strncat(path, fileName, BUFSIZE - strlen(path) - 1);
+
     generateHeader(400, path, fileContent, sizeof(fileContent));
     sendWithFile(sd, fileContent, path);
 
@@ -150,16 +154,25 @@ void sendWithFile(int sd, char* fileContent, char* path){
     }
 }
 
-void handleForbiddenRequest(int sd){
+void handleForbiddenRequest(int sd, char* rootDir){
     char fileContent[BUFSIZE] = "";
-    char* path = "../../www/Forbidden.html";
+    char* fileName = "/Forbidden.html";
+    char path[MAX_PATH_STR] = "";
+    strncat(path, rootDir, BUFSIZE - strlen(path) - 1);
+    strncat(path, fileName, BUFSIZE - strlen(path) - 1);
+
     generateHeader(403, path, fileContent, sizeof(fileContent));
     sendWithFile(sd, fileContent, path);
 }
 
-void handleFileNotFound(int sd){
+void handleFileNotFound(int sd, char* rootDir){
     char fileContent[BUFSIZE] = "";
-    char* path = "../../www/NotFound.html";
+    char* fileName = "/NotFound.html";
+    char path[MAX_PATH_STR] = "";
+    strncat(path, rootDir, BUFSIZE - strlen(path) - 1);
+    strncat(path, fileName, BUFSIZE - strlen(path) - 1);
+
     generateHeader(404, path, fileContent, sizeof(fileContent));
     sendWithFile(sd, fileContent, path);
 }
+//TODO: ADD INTERNAL SERVER ERROR!!!!!!
