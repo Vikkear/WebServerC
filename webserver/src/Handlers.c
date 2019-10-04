@@ -82,6 +82,7 @@ int handleGET(int sd, char *rootDir, char *path)
 {
     char fileContent[BUFSIZE] = "";
     char fullpath[MAX_PATH_STR] = "";
+    strncat(fullpath, rootDir, MAX_PATH_STR - strlen(fullpath) - 1);
     strncat(fullpath, path, MAX_PATH_STR - strlen(fullpath) - 1);
     generateHeader(200, fullpath, fileContent, sizeof(fileContent));
     sendWithFile(sd, fileContent, rootDir, path);
@@ -157,10 +158,10 @@ void handleInternalServerError(int sd, char* rootDir){
 void handleFaultyRequest(int sd, char* rootDir, int code, char* fileName){
     char fileContent[BUFSIZE] = "";
     char path[MAX_PATH_STR] = "";
-    strncat(path, rootDir, BUFSIZE - strlen(path) - 1);
-    strncat(path, fileName, BUFSIZE - strlen(path) - 1);
+    strncat(path, rootDir, MAX_PATH_STR - strlen(path) - 1);
+    strncat(path, fileName, MAX_PATH_STR - strlen(path) - 1);
 
-    generateHeader(501, path, fileContent, sizeof(fileContent));
-    sendWithFile(sd, fileContent, rootDir, path);
+    generateHeader(code, path, fileContent, sizeof(fileContent));
+    sendWithFile(sd, fileContent, rootDir, fileName);
 }
 //TODO: ADD INTERNAL SERVER ERROR!!!!!!
