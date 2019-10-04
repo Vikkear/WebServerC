@@ -10,8 +10,8 @@ int handleBadRequest(int sd, char* rootDir);
 void handleFileNotFound(int sd, char* rootDir);
 void handleForbiddenRequest(int sd, char* rootDir);
 void handleNotImplemented(int sd, char* rootDir);
-void handleInternalServerError(int sd, char* rootDir)
+void handleInternalServerError(int sd, char* rootDir);
 void handleFaultyRequest(int sd, char* rootDir, int code, char* fileName);
-void sendWithFile(int sd, char* fileContent, char* path);
+void sendWithFile(int sd, char* fileContent, char* rootDir, char* path);
 
 #endif

@@ -81,10 +81,10 @@ int handleRequest(int sd_current, char* rootDir){
 int handleGET(int sd, char *rootDir, char *path)
 {
     char fileContent[BUFSIZE] = "";
-    strncat(rootDir, path);
-    generateHeader(200, rootDir, fileContent, sizeof(fileContent));
-    sendWithFile(sd, fileContent, rootDir);
-
+    char fullpath[MAX_PATH_STR] = "";
+    strncat(fullpath, path, MAX_PATH_STR - strlen(fullpath) - 1);
+    generateHeader(200, fullpath, fileContent, sizeof(fileContent));
+    sendWithFile(sd, fileContent, rootDir, path);
 }
 
 int handleHEAD(int sd, char* rootDir , char *path){
@@ -109,11 +109,15 @@ int handleHEAD(int sd, char* rootDir , char *path){
 }
 
 
-void sendWithFile(int sd, char* fileContent, char* fullPath){
+void sendWithFile(int sd, char* fileContent, char* rootDir, char* path){
 
     //FILE* file = fopen(path,"r");
-    //char tmpSTR[BUFSIZE] = "";
+    char tmpSTR[BUFSIZE] = "";
     // Check if file exist
+
+    char fullPath[MAX_PATH_STR];
+    strcpy(fullPath, rootDir);
+    strcat(fullPath, path);
 
     char buf[1024];
     char *res = realpath(fullPath, buf);
@@ -157,6 +161,6 @@ void handleFaultyRequest(int sd, char* rootDir, int code, char* fileName){
     strncat(path, fileName, BUFSIZE - strlen(path) - 1);
 
     generateHeader(501, path, fileContent, sizeof(fileContent));
-    sendWithFile(sd, fileContent, path);
+    sendWithFile(sd, fileContent, rootDir, path);
 }
 //TODO: ADD INTERNAL SERVER ERROR!!!!!!
