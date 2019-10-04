@@ -1,6 +1,8 @@
 #include "../include/Handlers.h"
 #include "../include/Checkers.h"
 
+#include <syslog.h>
+
 #define REQUEST_SIZE 64
 
 int handleRequest(int sd_current, char* rootDir){
@@ -86,6 +88,24 @@ int handleGET(int sd, char *rootDir, char *path)
     strncat(fullpath, path, MAX_PATH_STR - strlen(fullpath) - 1);
     generateHeader(200, fullpath, fileContent, sizeof(fileContent));
     sendWithFile(sd, fileContent, rootDir, path);
+
+    char logMessage[LOGSIZE] = "";
+    char ip[16] = "";
+    struct sockaddr_in addr;
+    getsockname(sd, (struct sockaddr *) &addr, sizeof(addr));
+    inet_ntop(AF_INET, &addr.sin_addr, ip, sizeof(ip));
+
+    char dateString[MAX_PATH_STR] = "";
+    time_t t = time(NULL);
+    struct tm tm = *gmtime(&t);
+    strftime(dateString, sizeof(dateString), "[%a, %d %b %Y %H:%M:%S %Z]\r\n", &tm);
+
+    char requestString[MAX_PATH_STR] = "";
+
+    fprintf(logMessage, "%s - - %s %s %d %d\n", ip, dateString, requestString, 200, 10);
+    if(useSyslog){
+        syslog(LOG_INFO, logMessage);
+    }
 }
 
 int handleHEAD(int sd, char* rootDir , char *path){

@@ -7,6 +7,7 @@
 #include <sys/resource.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <syslog.h>
 
 #define DIE(str) \
     perror(str); \
@@ -15,8 +16,8 @@
 char *rootDirLink = "../../www";
 char rootDir[MAX_PATH_STR];
 
-int amountOfArguments = 3;
-char *commandList[] = {"-p", "-h", "-d"};
+int amountOfArguments = 4;
+char *commandList[] = {"-p", "-h", "-d", "-l"};
 
 int portnumber = -1;
 
@@ -36,6 +37,7 @@ int main(int argc, char *argv[])
     // -h Print help text
     // "-p port" Listen to port number "port"
 
+    memset(logfile, 0, MAX_PATH_STR); // <--- TODO: move somewhere nice
     for(int i = 1; i < argc; i++){
         int argcheck = 0;
         for (int j = 0; j < amountOfArguments; j++){
@@ -53,6 +55,20 @@ int main(int argc, char *argv[])
                 portnumber = atoi(argv[i]);
             }
         }
+        if(strcmp(argv[i], "-l") == 0){
+            if(i+1 < argc) {
+                i++;
+                strncpy(logfile, argv[i], MAX_PATH_STR);
+            }
+        }
+    }
+
+    if(strcmp(logfile, "") == 0){
+        openlog("Webserver", LOG_NDELAY, LOG_USER);
+        useSyslog = 1;
+    }
+    else {
+        useSyslog = 0;
     }
 
     if ((sd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
@@ -110,6 +126,9 @@ int main(int argc, char *argv[])
 
     shutdown(sd_current, SHUT_WR);
     close(sd_current);
+    if(useSyslog == 1){
+        closelog();
+    }
     exit(0);
 }
 
@@ -134,7 +153,7 @@ void loadConfig(){
             portnumber = atoi(intChar);
         }
         if(strncmp("requestHandling", tmpSTR, 15) == 0){
-            printf("Not implemented\n");
+            printf("RequestHandling: Not implemented\n");
         }
     }
     fclose(file);

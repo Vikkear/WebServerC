@@ -3,6 +3,7 @@
 
 #define BUFSIZE 65535
 #define MAX_PATH_STR 256
+#define LOGSIZE 512
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -22,5 +23,8 @@
     exit(-1);
 
 void closeConnection(int sd);
+
+int useSyslog;
+char logfile[MAX_PATH_STR];
 
 #endif
