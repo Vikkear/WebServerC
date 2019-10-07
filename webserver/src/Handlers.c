@@ -14,7 +14,10 @@ int handleRequest(int sd_current, char* rootDir){
     }
     buf[BUFSIZE-1] = '\0';
 
-    printf("%s\n", buf);
+    char requestBuf[BUFSIZE];
+    strncpy(requestBuf, buf, sizeof(requestBuf));
+
+    printf("%s\n", requestBuf);
     char delim[] = " ";
     char *request = strtok(buf, delim);
     char *requests[REQUEST_SIZE];
@@ -30,18 +33,18 @@ int handleRequest(int sd_current, char* rootDir){
     {
         printf("%s\n", requests[i]);
         if(strlen(requests[i]) >= MAX_PATH_STR){
-            handleBadRequest(sd_current, rootDir, buf);
+            handleBadRequest(sd_current, rootDir, requestBuf);
             closeConnection(sd_current);
         }
     }
     printf("Request counter: %d\n", requestCounter);
 
     if(requestCounter < 3) {
-        handleBadRequest(sd_current, rootDir, buf);
+        handleBadRequest(sd_current, rootDir, requestBuf);
         closeConnection(sd_current);
     }
 
-    if(checkUnsuppotedMethod(sd_current, requests[0], rootDir, buf) == 1) {
+    if(checkUnsuppotedMethod(sd_current, requests[0], rootDir, requestBuf) == 1) {
         closeConnection(sd_current);
     }
 
@@ -50,12 +53,12 @@ int handleRequest(int sd_current, char* rootDir){
         if (checkVersion(requests[2]) == 1)
         {
             printf("correct version\n");
-            handleGET(sd_current, rootDir, requests[1], buf);
+            handleGET(sd_current, rootDir, requests[1], requestBuf);
         }
         else
         {
             // 400
-            handleBadRequest(sd_current, rootDir, buf);
+            handleBadRequest(sd_current, rootDir, requestBuf);
             printf("incorrect version\n");
         }
     }
@@ -64,18 +67,18 @@ int handleRequest(int sd_current, char* rootDir){
         if (checkVersion(requests[2]) == 1)
         {
             printf("correct version\n");
-            handleHEAD(sd_current, rootDir, requests[1], buf);
+            handleHEAD(sd_current, rootDir, requests[1], requestBuf);
         }
         else
         {
             // 400
-            handleBadRequest(sd_current, rootDir, buf);
+            handleBadRequest(sd_current, rootDir, requestBuf);
             printf("incorrect version\n");
         }
     }
     else
     {
-        handleBadRequest(sd_current, rootDir, buf);
+        handleBadRequest(sd_current, rootDir, requestBuf);
     }
     return 0;
 }
@@ -88,15 +91,16 @@ int handleGET(int sd, char *rootDir, char *path, char * request)
     strncat(fullpath, rootDir, MAX_PATH_STR - strlen(fullpath) - 1);
     strncat(fullpath, path, MAX_PATH_STR - strlen(fullpath) - 1);
     generateHeader(200, fullpath, fileContent, sizeof(fileContent));
-    size = sendWithFile(sd, fileContent, rootDir, path, "GET");
+    size = sendWithFile(sd, fileContent, rootDir, path, request);
     logToFile(sd, request, 200, size);
 }
 
 int handleHEAD(int sd, char* rootDir , char *path, char* request){
     // Check if file exist
-    FILE *file = checkFile(sd, rootDir, path, "HEAD");
+    FILE *file = checkFile(sd, rootDir, path, request);
     if (file)
     {
+
         char header[BUFSIZE] = "";
         char fullpath[MAX_PATH_STR] = "";
         strncat(fullpath, rootDir, MAX_PATH_STR - strlen(fullpath) - 1);
@@ -117,14 +121,7 @@ int sendWithFile(int sd, char* fileContent, char* rootDir, char* path, char* req
     //FILE* file = fopen(path,"r");
     char tmpSTR[BUFSIZE] = "";
     // Check if file exist
-
-    char fullPath[MAX_PATH_STR];
-    strcpy(fullPath, rootDir);
-    strcat(fullPath, path);
-
-    char buf[1024];
-    char *res = realpath(fullPath, buf);
-    FILE *file = checkFile(sd, rootDir , buf, request);
+    FILE *file = checkFile(sd, rootDir , path, request);
     if(file){
         while (fgets(tmpSTR, BUFSIZE, file) != NULL)
         {
@@ -195,11 +192,15 @@ void logToFile(int sd, char* request, int code, int size){
     struct tm tm = *gmtime(&t);
     strftime(dateString, sizeof(dateString), "[%a, %d %b %Y %H:%M:%S %Z]", &tm);
 
+    char firstLineRequest[MAX_PATH_STR] = "";
     char* ptr = strchr(request, '\n');
-    ptr[0] = '\0';
-    memset(request+strlen(request), 0, request-strlen(request));
+    if(ptr != NULL){
+        int newlinePos = (int)(ptr - request);
+        strncpy(firstLineRequest, request, newlinePos);
+    }
+    else strncpy(firstLineRequest, request, sizeof(firstLineRequest));
 
-    sprintf(logMessage, "%s - - %s \"%s\" %d %d", ip, dateString, request, code, size);
+    sprintf(logMessage, "%s - - %s \"%s\" %d %d", ip, dateString, firstLineRequest, code, size);
 
     if(useSyslog){
         syslog(LOG_INFO, logMessage);

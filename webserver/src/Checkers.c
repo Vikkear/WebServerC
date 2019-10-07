@@ -32,26 +32,26 @@ FILE *checkFile(int sd, char* rootDir, char *fileName, char* request)
     strcpy(fullPath, rootDir);
     strcat(fullPath, fileName);
 
-    char buf[1024];
-    char *res = realpath(fullPath, buf);
+    char fullFilename[1024];
+    char *res = realpath(fullPath, fullFilename);
 
     FILE *file;
     char path[MAX_PATH_STR] = "";
 
-    if (!strncmp(rootDir, fileName, strlen(rootDir)) == 0){
+    if (!strncmp(rootDir, fullFilename, strlen(rootDir)) == 0){
         // Outside of root dir, 403
         handleForbiddenRequest(sd, rootDir, request);
         closeConnection(sd);
     }
 
-    int rPermission = access(fileName, R_OK);
+    int rPermission = access(fullFilename, R_OK);
 
-    if (rPermission != 0 && access(fileName, F_OK) == 0){
+    if (rPermission != 0 && access(fullFilename, F_OK) == 0){
         handleForbiddenRequest(sd, rootDir, request);
         closeConnection(sd);
     }
 
-    file = fopen(fileName, "r");
+    file = fopen(fullFilename, "r");
     if (file)
     {
         return file;
