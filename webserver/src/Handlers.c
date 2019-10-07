@@ -78,7 +78,7 @@ int handleRequest(int sd_current, char* rootDir){
     }
     else
     {
-        handleBadRequest(sd_current, rootDir, requestBuf);
+        handleInternalServerError(sd_current, rootDir, requestBuf);
     }
     return 0;
 }
