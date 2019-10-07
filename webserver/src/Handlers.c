@@ -193,7 +193,9 @@ void logToFile(int sd, char* request, int code, int size){
     strftime(dateString, sizeof(dateString), "[%a, %d %b %Y %H:%M:%S %Z]", &tm);
 
     char firstLineRequest[MAX_PATH_STR] = "";
-    char* ptr = strchr(request, '\n');
+    char* ptr = strchr(request, '\r');
+    if(ptr == NULL) ptr = strchr(request, '\n');
+
     if(ptr != NULL){
         int newlinePos = (int)(ptr - request);
         strncpy(firstLineRequest, request, newlinePos);
