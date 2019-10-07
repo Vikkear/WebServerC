@@ -30,18 +30,18 @@ int handleRequest(int sd_current, char* rootDir){
     {
         printf("%s\n", requests[i]);
         if(strlen(requests[i]) >= MAX_PATH_STR){
-            handleBadRequest(sd_current, rootDir, requests[1], requests[0]);
+            handleBadRequest(sd_current, rootDir, buf);
             closeConnection(sd_current);
         }
     }
     printf("Request counter: %d\n", requestCounter);
 
     if(requestCounter < 3) {
-        handleBadRequest(sd_current, rootDir, requests[1], requests[0]);
+        handleBadRequest(sd_current, rootDir, buf);
         closeConnection(sd_current);
     }
 
-    if(checkUnsuppotedMethod(sd_current, requests[0], rootDir, requests[1]) == 1) {
+    if(checkUnsuppotedMethod(sd_current, requests[0], rootDir, buf) == 1) {
         closeConnection(sd_current);
     }
 
@@ -50,12 +50,12 @@ int handleRequest(int sd_current, char* rootDir){
         if (checkVersion(requests[2]) == 1)
         {
             printf("correct version\n");
-            handleGET(sd_current, rootDir, requests[1]);
+            handleGET(sd_current, rootDir, requests[1], buf);
         }
         else
         {
             // 400
-            handleBadRequest(sd_current, rootDir, requests[1], requests[0]);
+            handleBadRequest(sd_current, rootDir, buf);
             printf("incorrect version\n");
         }
     }
@@ -64,23 +64,23 @@ int handleRequest(int sd_current, char* rootDir){
         if (checkVersion(requests[2]) == 1)
         {
             printf("correct version\n");
-            handleHEAD(sd_current, rootDir, requests[1]);
+            handleHEAD(sd_current, rootDir, requests[1], buf);
         }
         else
         {
             // 400
-            handleBadRequest(sd_current, rootDir, requests[1], requests[0]);
+            handleBadRequest(sd_current, rootDir, buf);
             printf("incorrect version\n");
         }
     }
     else
     {
-        handleBadRequest(sd_current, rootDir, requests[1], requests[0]);
+        handleBadRequest(sd_current, rootDir, buf);
     }
     return 0;
 }
 
-int handleGET(int sd, char *rootDir, char *path)
+int handleGET(int sd, char *rootDir, char *path, char * request)
 {
     int size = 0;
     char fileContent[BUFSIZE] = "";
@@ -89,10 +89,10 @@ int handleGET(int sd, char *rootDir, char *path)
     strncat(fullpath, path, MAX_PATH_STR - strlen(fullpath) - 1);
     generateHeader(200, fullpath, fileContent, sizeof(fileContent));
     size = sendWithFile(sd, fileContent, rootDir, path, "GET");
-    logToFile(sd, "GET", path, 200, size);
+    logToFile(sd, request, 200, size);
 }
 
-int handleHEAD(int sd, char* rootDir , char *path){
+int handleHEAD(int sd, char* rootDir , char *path, char* request){
     // Check if file exist
     FILE *file = checkFile(sd, rootDir, path, "HEAD");
     if (file)
@@ -103,11 +103,11 @@ int handleHEAD(int sd, char* rootDir , char *path){
         strncat(fullpath, path, MAX_PATH_STR - strlen(fullpath) - 1);
         generateHeader(200, fullpath, header, sizeof(header));
         send(sd, header, strlen(header), MSG_EOR);
-        logToFile(sd, "HEAD", path, 200, 0);
+        logToFile(sd, request, 200, 0);
     }
     else
     {
-        handleFileNotFound(sd, rootDir, path, "HEAD");
+        handleFileNotFound(sd, rootDir, request);
     }
 }
 
@@ -134,40 +134,40 @@ int sendWithFile(int sd, char* fileContent, char* rootDir, char* path, char* req
         send(sd, fileContent, strlen(fileContent), MSG_EOR);
         fclose(file);
     } else {
-        handleFileNotFound(sd, rootDir, path, request);
+        handleFileNotFound(sd, rootDir, request);
     }
 
     return filesize;
 }
 
-int handleBadRequest(int sd, char* rootDir, char* requestPath,char* request) {
+int handleBadRequest(int sd, char* rootDir, char* request) {
     char path[MAX_PATH_STR] = "/BadRequest.html";
     int size = handleFaultyRequest(sd, rootDir, 400, path, request);
-    logToFile(sd, request, requestPath, 400, size);
+    logToFile(sd, request, 400, size);
 }
 
-void handleForbiddenRequest(int sd, char* rootDir, char* requestPath, char* request){
+void handleForbiddenRequest(int sd, char* rootDir, char* request){
     char path[MAX_PATH_STR] = "/Forbidden.html";
     int size = handleFaultyRequest(sd, rootDir, 403, path, request);
-    logToFile(sd, request, requestPath, 403, size);
+    logToFile(sd, request, 403, size);
 }
 
-void handleFileNotFound(int sd, char* rootDir, char* requestPath, char* request){
+void handleFileNotFound(int sd, char* rootDir, char* request){
     char path[MAX_PATH_STR] = "/NotFound.html";
     int size = handleFaultyRequest(sd, rootDir, 404, path, request);
-    logToFile(sd, request, requestPath, 404, size);
+    logToFile(sd, request, 404, size);
 }
 
-void handleInternalServerError(int sd, char* rootDir, char* requestPath, char* request){
+void handleInternalServerError(int sd, char* rootDir, char* request){
     char path[MAX_PATH_STR] = "/InternalServerError.html";
     int size = handleFaultyRequest(sd, rootDir, 500, path, request);
-    logToFile(sd, request, requestPath, 500, size);
+    logToFile(sd, request, 500, size);
 }
 
-void handleNotImplemented(int sd, char* rootDir, char* requestPath, char* request){
+void handleNotImplemented(int sd, char* rootDir, char* request){
     char path[MAX_PATH_STR] = "/NotImplemented.html";
     int size = handleFaultyRequest(sd, rootDir, 501, path, request);
-    logToFile(sd, request, requestPath, 501, size);
+    logToFile(sd, request, 501, size);
 }
 
 int handleFaultyRequest(int sd, char* rootDir, int code, char* fileName, char* request){
@@ -182,7 +182,7 @@ int handleFaultyRequest(int sd, char* rootDir, int code, char* fileName, char* r
     return size;
 }
 
-void logToFile(int sd, char* request, char* path, int code, int size){
+void logToFile(int sd, char* request, int code, int size){
     char logMessage[LOGSIZE] = "";
     struct sockaddr_in addr;
     socklen_t addr_size = sizeof(struct sockaddr_in);
@@ -195,13 +195,11 @@ void logToFile(int sd, char* request, char* path, int code, int size){
     struct tm tm = *gmtime(&t);
     strftime(dateString, sizeof(dateString), "[%a, %d %b %Y %H:%M:%S %Z]", &tm);
 
-    char requestString[MAX_PATH_STR] = "";
-    strncat(requestString, request, MAX_PATH_STR - strlen(requestString) - 1);
-    strncat(requestString, " ", MAX_PATH_STR - strlen(requestString) - 1);
-    strncat(requestString, path, MAX_PATH_STR - strlen(requestString) - 1);
-    strncat(requestString, " HTTP/1.0", MAX_PATH_STR - strlen(requestString) - 1);
+    char* ptr = strchr(request, '\n');
+    ptr[0] = '\0';
+    memset(request+strlen(request), 0, request-strlen(request));
 
-    sprintf(logMessage, "%s - - %s \"%s\" %d %d", ip, dateString, requestString, code, size);
+    sprintf(logMessage, "%s - - %s \"%s\" %d %d", ip, dateString, request, code, size);
 
     if(useSyslog){
         syslog(LOG_INFO, logMessage);

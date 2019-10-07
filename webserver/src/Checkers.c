@@ -15,11 +15,11 @@ int checkVersion(char *version)
     return 0;
 }
 
-int checkUnsuppotedMethod(int sd, char* method, char* rootDir, char* requestPath){
+int checkUnsuppotedMethod(int sd, char* method, char* rootDir, char* request){
     // Check if unsupported method
     for(int i = 0; i < 7; i++){
         if(strcmp(method, unSupported[i]) == 0){
-            handleNotImplemented(sd, rootDir, requestPath, method);
+            handleNotImplemented(sd, rootDir, request);
             return 1;
         }
     }
@@ -40,14 +40,14 @@ FILE *checkFile(int sd, char* rootDir, char *fileName, char* request)
 
     if (!strncmp(rootDir, fileName, strlen(rootDir)) == 0){
         // Outside of root dir, 403
-        handleForbiddenRequest(sd, rootDir, fileName, request);
+        handleForbiddenRequest(sd, rootDir, request);
         closeConnection(sd);
     }
 
     int rPermission = access(fileName, R_OK);
 
     if (rPermission != 0 && access(fileName, F_OK) == 0){
-        handleForbiddenRequest(sd, rootDir, fileName, request);
+        handleForbiddenRequest(sd, rootDir, request);
         closeConnection(sd);
     }
 
@@ -58,7 +58,7 @@ FILE *checkFile(int sd, char* rootDir, char *fileName, char* request)
     }
     else
     {
-        handleFileNotFound(sd, rootDir, fileName, request);
+        handleFileNotFound(sd, rootDir, request);
         closeConnection(sd);
         return NULL;
     }
