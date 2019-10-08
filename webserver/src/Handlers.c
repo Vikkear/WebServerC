@@ -33,14 +33,14 @@ int handleRequest(int sd_current, char* rootDir){
     {
         printf("%s\n", requests[i]);
         if(strlen(requests[i]) >= MAX_PATH_STR){
-            handleBadRequest(sd_current, rootDir, requestBuf);
+            handleBadRequest(sd_current, rootDir, requestBuf, 1);
             closeConnection(sd_current);
         }
     }
     printf("Request counter: %d\n", requestCounter);
 
     if(requestCounter < 3) {
-        handleBadRequest(sd_current, rootDir, requestBuf);
+        handleBadRequest(sd_current, rootDir, requestBuf, 1);
         closeConnection(sd_current);
     }
 
@@ -58,7 +58,7 @@ int handleRequest(int sd_current, char* rootDir){
         else
         {
             // 400
-            handleBadRequest(sd_current, rootDir, requestBuf);
+            handleBadRequest(sd_current, rootDir, requestBuf, 1);
             printf("incorrect version\n");
         }
     }
@@ -72,13 +72,13 @@ int handleRequest(int sd_current, char* rootDir){
         else
         {
             // 400
-            handleBadRequest(sd_current, rootDir, requestBuf);
+            handleBadRequest(sd_current, rootDir, requestBuf, 0);
             printf("incorrect version\n");
         }
     }
     else
     {
-        handleInternalServerError(sd_current, rootDir, requestBuf);
+        handleInternalServerError(sd_current, rootDir, requestBuf, 1);
     }
     return 0;
 }
@@ -97,7 +97,7 @@ int handleGET(int sd, char *rootDir, char *path, char * request)
 
 int handleHEAD(int sd, char* rootDir , char *path, char* request){
     // Check if file exist
-    FILE *file = checkFile(sd, rootDir, path, request);
+    FILE *file = checkFile(sd, rootDir, path, request, 0);
     if (file)
     {
 
@@ -111,7 +111,7 @@ int handleHEAD(int sd, char* rootDir , char *path, char* request){
     }
     else
     {
-        handleFileNotFound(sd, rootDir, request);
+        handleFileNotFound(sd, rootDir, request, 0);
     }
 }
 
@@ -121,7 +121,7 @@ int sendWithFile(int sd, char* fileContent, char* rootDir, char* path, char* req
     //FILE* file = fopen(path,"r");
     char tmpSTR[BUFSIZE] = "";
     // Check if file exist
-    FILE *file = checkFile(sd, rootDir , path, request);
+    FILE *file = checkFile(sd, rootDir , path, request, 1);
     if(file){
         while (fgets(tmpSTR, BUFSIZE, file) != NULL)
         {
@@ -131,43 +131,43 @@ int sendWithFile(int sd, char* fileContent, char* rootDir, char* path, char* req
         send(sd, fileContent, strlen(fileContent), MSG_EOR);
         fclose(file);
     } else {
-        handleFileNotFound(sd, rootDir, request);
+        handleFileNotFound(sd, rootDir, request, 1);
     }
 
     return filesize;
 }
 
-int handleBadRequest(int sd, char* rootDir, char* request) {
+int handleBadRequest(int sd, char* rootDir, char* request, int incBody) {
     char path[MAX_PATH_STR] = "/BadRequest.html";
-    int size = handleFaultyRequest(sd, rootDir, 400, path, request);
+    int size = handleFaultyRequest(sd, rootDir, 400, path, request, incBody);
     logToFile(sd, request, 400, size);
 }
 
-void handleForbiddenRequest(int sd, char* rootDir, char* request){
+void handleForbiddenRequest(int sd, char* rootDir, char* request, int incBody){
     char path[MAX_PATH_STR] = "/Forbidden.html";
-    int size = handleFaultyRequest(sd, rootDir, 403, path, request);
+    int size = handleFaultyRequest(sd, rootDir, 403, path, request, incBody);
     logToFile(sd, request, 403, size);
 }
 
-void handleFileNotFound(int sd, char* rootDir, char* request){
+void handleFileNotFound(int sd, char* rootDir, char* request, int incBody){
     char path[MAX_PATH_STR] = "/NotFound.html";
-    int size = handleFaultyRequest(sd, rootDir, 404, path, request);
+    int size = handleFaultyRequest(sd, rootDir, 404, path, request, incBody);
     logToFile(sd, request, 404, size);
 }
 
-void handleInternalServerError(int sd, char* rootDir, char* request){
+void handleInternalServerError(int sd, char* rootDir, char* request, int incBody){
     char path[MAX_PATH_STR] = "/InternalServerError.html";
-    int size = handleFaultyRequest(sd, rootDir, 500, path, request);
+    int size = handleFaultyRequest(sd, rootDir, 500, path, request, incBody);
     logToFile(sd, request, 500, size);
 }
 
-void handleNotImplemented(int sd, char* rootDir, char* request){
+void handleNotImplemented(int sd, char* rootDir, char* request, int incBody){
     char path[MAX_PATH_STR] = "/NotImplemented.html";
-    int size = handleFaultyRequest(sd, rootDir, 501, path, request);
+    int size = handleFaultyRequest(sd, rootDir, 501, path, request, incBody);
     logToFile(sd, request, 501, size);
 }
 
-int handleFaultyRequest(int sd, char* rootDir, int code, char* fileName, char* request){
+int handleFaultyRequest(int sd, char* rootDir, int code, char* fileName, char* request, int incBody){
     char fileContent[BUFSIZE] = "";
     char path[MAX_PATH_STR] = "";
     int size = 0;
@@ -175,7 +175,12 @@ int handleFaultyRequest(int sd, char* rootDir, int code, char* fileName, char* r
     strncat(path, fileName, MAX_PATH_STR - strlen(path) - 1);
 
     generateHeader(code, path, fileContent, sizeof(fileContent));
-    size = sendWithFile(sd, fileContent, rootDir, fileName, request);
+    if(incBody)
+        size = sendWithFile(sd, fileContent, rootDir, fileName, request);
+    else {
+        send(sd, fileContent, strlen(fileContent), MSG_EOR);
+        size = 0;
+    }
     return size;
 }
 
@@ -190,7 +195,7 @@ void logToFile(int sd, char* request, int code, int size){
     char dateString[MAX_PATH_STR] = "";
     time_t t = time(NULL);
     struct tm tm = *gmtime(&t);
-    strftime(dateString, sizeof(dateString), "[%a, %d %b %Y %H:%M:%S %Z]", &tm);
+    strftime(dateString, sizeof(dateString), "[%d/%b/%Y:%H:%M:%S %z]", &tm);
 
     char firstLineRequest[MAX_PATH_STR] = "";
     char* ptr = strchr(request, '\r');
