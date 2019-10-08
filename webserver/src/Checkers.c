@@ -29,8 +29,8 @@ int checkUnsuppotedMethod(int sd, char* method, char* rootDir, char* request){
 FILE *checkFile(int sd, char* rootDir, char *fileName, char* request, int incBody)
 {
     char fullPath[MAX_PATH_STR];
-    strcpy(fullPath, rootDir);
-    strcat(fullPath, fileName);
+    strncpy(fullPath, rootDir, sizeof(fullPath));
+    strncat(fullPath, fileName, MAX_PATH_STR - strlen(fileName)-1);
 
     char fullFilename[1024];
     char *res = realpath(fullPath, fullFilename);

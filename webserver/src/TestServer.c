@@ -40,6 +40,7 @@ int main(int argc, char *argv[])
     // Command line options:
     // -h Print help text
     // "-p port" Listen to port number "port"
+    // "-d" 
 
     memset(logfile, 0, MAX_PATH_STR); // <--- TODO: move somewhere nice
     for(int i = 1; i < argc; i++){
@@ -170,10 +171,10 @@ int main(int argc, char *argv[])
             printf("accepted connection\n");
 
             pthread_t thread_id;
-            pthread_create(&thread_id, NULL, handleRequestThread, NULL);
+            pthread_create(&thread_id, NULL, handleRequestThread, sd_current);
         }
     }
-    pthread_exit(NULL);
+    //pthread_exit(NULL);
     shutdown(sd_current, SHUT_WR);
     close(sd_current);
     if(useSyslog == 1){
@@ -183,7 +184,8 @@ int main(int argc, char *argv[])
 }
 
 void *handleRequestThread(void *arg) {
-    int sd = (int*)arg;
+    int *sd = (int*)arg;
+    printf("sd: %d\n", sd);
     handleRequest(sd, rootDir);
 }
 

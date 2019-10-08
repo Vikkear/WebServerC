@@ -93,6 +93,7 @@ int handleGET(int sd, char *rootDir, char *path, char * request)
     generateHeader(200, fullpath, fileContent, sizeof(fileContent));
     size = sendWithFile(sd, fileContent, rootDir, path, request);
     logToFile(sd, request, 200, size);
+    closeConnection(sd);
 }
 
 int handleHEAD(int sd, char* rootDir , char *path, char* request){
@@ -108,6 +109,7 @@ int handleHEAD(int sd, char* rootDir , char *path, char* request){
         generateHeader(200, fullpath, header, sizeof(header));
         send(sd, header, strlen(header), MSG_EOR);
         logToFile(sd, request, 200, 0);
+        closeConnection(sd);
     }
     else
     {
@@ -141,30 +143,35 @@ int handleBadRequest(int sd, char* rootDir, char* request, int incBody) {
     char path[MAX_PATH_STR] = "/BadRequest.html";
     int size = handleFaultyRequest(sd, rootDir, 400, path, request, incBody);
     logToFile(sd, request, 400, size);
+    closeConnection(sd);
 }
 
 void handleForbiddenRequest(int sd, char* rootDir, char* request, int incBody){
     char path[MAX_PATH_STR] = "/Forbidden.html";
     int size = handleFaultyRequest(sd, rootDir, 403, path, request, incBody);
     logToFile(sd, request, 403, size);
+    closeConnection(sd);
 }
 
 void handleFileNotFound(int sd, char* rootDir, char* request, int incBody){
     char path[MAX_PATH_STR] = "/NotFound.html";
     int size = handleFaultyRequest(sd, rootDir, 404, path, request, incBody);
     logToFile(sd, request, 404, size);
+    closeConnection(sd);
 }
 
 void handleInternalServerError(int sd, char* rootDir, char* request, int incBody){
     char path[MAX_PATH_STR] = "/InternalServerError.html";
     int size = handleFaultyRequest(sd, rootDir, 500, path, request, incBody);
     logToFile(sd, request, 500, size);
+    closeConnection(sd);
 }
 
 void handleNotImplemented(int sd, char* rootDir, char* request, int incBody){
     char path[MAX_PATH_STR] = "/NotImplemented.html";
     int size = handleFaultyRequest(sd, rootDir, 501, path, request, incBody);
     logToFile(sd, request, 501, size);
+    closeConnection(sd);
 }
 
 int handleFaultyRequest(int sd, char* rootDir, int code, char* fileName, char* request, int incBody){
@@ -190,7 +197,7 @@ void logToFile(int sd, char* request, int code, int size){
     socklen_t addr_size = sizeof(struct sockaddr_in);
     int res = getpeername(sd, (struct sockaddr *)&addr, &addr_size);
     char ip[20];
-    strcpy(ip, inet_ntoa(addr.sin_addr));
+    strncpy(ip, inet_ntoa(addr.sin_addr), sizeof(ip));
 
     char dateString[MAX_PATH_STR] = "";
     time_t t = time(NULL);
