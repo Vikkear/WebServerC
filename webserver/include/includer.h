@@ -26,5 +26,6 @@ void closeConnection(int sd);
 
 int useSyslog;
 char logfile[MAX_PATH_STR];
+FILE* logFilepointer;
 
 #endif

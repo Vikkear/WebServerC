@@ -212,11 +212,10 @@ void logToFile(int sd, char* request, int code, int size){
     if(useSyslog){
         syslog(LOG_INFO, logMessage);
     } else {
-        FILE* file = fopen(logfile, "a+");
-        if(file){
+        if(logFilepointer){
             strncat(logMessage, "\n", LOGSIZE - strlen(logMessage) - 1);
-            fputs(logMessage, file);
-            fclose(file);
+            fputs(logMessage, logFilepointer);
+            fflush(logFilepointer);
         }
         else {
             printf("Error: Could not open logfile!\n");
