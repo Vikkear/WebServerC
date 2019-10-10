@@ -19,7 +19,6 @@ int handleRequest(int sd_current, char* rootDir){
     char requestBuf[BUFSIZE];
     strncpy(requestBuf, buf, sizeof(requestBuf));
 
-    printf("%s\n", requestBuf);
     //Split the string with the delimiter "space" to create arguments
     char delim[] = " ";
     char *request = strtok(buf, delim);
@@ -36,13 +35,11 @@ int handleRequest(int sd_current, char* rootDir){
     // If it is, then it is a bad request and will be closed.
     for (int i = 0; i < requestCounter; i++)
     {
-        printf("%s\n", requests[i]);
         if(strlen(requests[i]) >= MAX_PATH_STR){
             handleBadRequest(sd_current, rootDir, requestBuf, 1);
             closeConnection(sd_current);
         }
     }
-    printf("Request counter: %d\n", requestCounter);
 
     //If we have less than three arguments we will get bad request
     if(requestCounter < 3) {
@@ -251,7 +248,7 @@ void logToFile(int sd, char* request, int code, int size){
     else strncpy(firstLineRequest, request, sizeof(firstLineRequest));
 
     //Format the string
-    sprintf(logMessage, "%s - - %s \"%s\" %d %d", ip, dateString, firstLineRequest, code, size);
+    snprintf(logMessage, "%s - - %s \"%s\" %d %d", ip, dateString, firstLineRequest, code, size, sizeof(logMessage));
 
     // Use the syslog if no filename is given
     if(useSyslog){
@@ -261,9 +258,6 @@ void logToFile(int sd, char* request, int code, int size){
             strncat(logMessage, "\n", LOGSIZE - strlen(logMessage) - 1);
             fputs(logMessage, logFilepointer);
             fflush(logFilepointer);
-        }
-        else {
-            printf("Error: Could not open logfile!\n");
         }
     }
 }

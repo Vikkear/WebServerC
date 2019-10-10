@@ -89,7 +89,6 @@ int main(int argc, char *argv[])
     }
 
     if(validRequestMethod == 0){
-        printf("Invalid request method! \n");
         printHelp();
     }
 
@@ -140,7 +139,6 @@ int main(int argc, char *argv[])
      int rooted = chroot(rootDir);
      if(rooted == 0) {
          memset(rootDir, 0, sizeof(rootDir));
-         printf("Jail succeded!\n");
      }
      else {
          printf("The process is not privileged (run as sudo for jail to function properly)\n");
@@ -155,7 +153,6 @@ int main(int argc, char *argv[])
             {
                 DIE("accept");
             }
-            printf("accepted connection\n");
 
             forkID = fork();
         }
@@ -177,7 +174,6 @@ int main(int argc, char *argv[])
             {
                 DIE("accept");
             }
-            printf("accepted connection\n");
 
             pthread_t thread_id;
             pthread_create(&thread_id, NULL, handleRequestThread, sd_current);
@@ -195,7 +191,6 @@ int main(int argc, char *argv[])
 //Function for pthread to call when connection is established
 void *handleRequestThread(void *arg) {
     int *sd = (int*)arg;
-    printf("sd: %d\n", sd);
     handleRequest(sd, rootDir);
 }
 
