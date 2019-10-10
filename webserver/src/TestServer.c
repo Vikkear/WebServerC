@@ -33,12 +33,14 @@ int main(int argc, char *argv[])
     struct sockaddr_in sin, pin;
     int sd, sd_current;
     int addrlen;
+    char currentCWD[MAX_PATH_STR] = "";
     realpath(rootDirLink, rootDir);
+    getcwd(currentCWD, sizeof(currentCWD));
 
     loadConfig();
     useSyslog = 0;
+    memset(logfile, 0, MAX_PATH_STR);
 
-    memset(logfile, 0, MAX_PATH_STR); // <--- TODO: move somewhere nice
 
     // Command line options:
     // "-h" - Print help text
@@ -99,7 +101,11 @@ int main(int argc, char *argv[])
         useSyslog = 1;
     }
     else {
-        logFilepointer = fopen(logfile, "a+");
+        char logpath[MAX_PATH_STR] = "";
+        strncpy(logpath, currentCWD, sizeof(logpath));
+        strncat(logpath, "/", MAX_PATH_STR - 1);
+        strncat(logpath, logfile, MAX_PATH_STR - strlen(logfile));
+        logFilepointer = fopen(logpath, "a+");
         useSyslog = 0;
     }
 
@@ -257,17 +263,6 @@ void daemonize(){
 
     // Set working directory to /
     chdir("/");
-
-
-    //close all open file descriptors
-    if(getrlimit(RLIMIT_NOFILE, &r1)){
-        perror(NULL);
-    }
-    if(r1.rlim_max == RLIM_INFINITY){
-        r1.rlim_max = 1024;
-    }
-    for(int i = 0; i < r1.rlim_max; i++)
-        close(i);
 
     //Reopen stdin and stdout
     fd0 = open("/dev/null", O_RDWR);
