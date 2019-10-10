@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     realpath(rootDirLink, rootDir);
 
     loadConfig();
-
+    useSyslog = 0;
 
     memset(logfile, 0, MAX_PATH_STR); // <--- TODO: move somewhere nice
 
@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
             }
 
             pthread_t thread_id;
-            pthread_create(&thread_id, NULL, handleRequestThread, sd_current);
+            pthread_create(&thread_id, NULL, handleRequestThread, &sd_current);
         }
     }
     //pthread_exit(NULL);
@@ -190,8 +190,8 @@ int main(int argc, char *argv[])
 
 //Function for pthread to call when connection is established
 void *handleRequestThread(void *arg) {
-    int *sd = (int*)arg;
-    handleRequest(sd, rootDir);
+    int* sd = (int*)arg;
+    handleRequest(*sd, rootDir);
 }
 
 //Load config file and replace variables from it

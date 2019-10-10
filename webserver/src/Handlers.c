@@ -248,7 +248,7 @@ void logToFile(int sd, char* request, int code, int size){
     else strncpy(firstLineRequest, request, sizeof(firstLineRequest));
 
     //Format the string
-    snprintf(logMessage, "%s - - %s \"%s\" %d %d", ip, dateString, firstLineRequest, code, size, sizeof(logMessage));
+    snprintf(logMessage, sizeof(logMessage), "%s - - %s \"%s\" %d %d", ip, dateString, firstLineRequest, code, size);
 
     // Use the syslog if no filename is given
     if(useSyslog){
