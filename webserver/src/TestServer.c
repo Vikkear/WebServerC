@@ -65,6 +65,7 @@ int main(int argc, char *argv[])
             if(i+1 < argc) {
                 i++;
                 portnumber = atoi(argv[i]);
+                if(portnumber < 1 || portnumber > 65535) printHelp();
             }
         }
         if(strcmp(argv[i], "-l") == 0){
@@ -272,10 +273,11 @@ void daemonize(){
 
 // Prints the usage to the user and closes the program
 void printHelp(){
-    printf("Usage: ./webserver [h|p|d|s]\n");
+    printf("Usage: ./webserver [h|p|d|l|s]\n");
     printf("-h, Print this help menu\n");
-    printf("-p <port>, Select which port to listen on\n");
+    printf("-p <port>, Select which port to listen on (1-65535)\n");
     printf("-d, Run the server as a daemon\n");
+    printf("-l <filename>, Log to file with name\n");
     printf("-s [fork|thread], Select request handling method\n");
     exit(0);
 }

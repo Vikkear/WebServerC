@@ -230,6 +230,9 @@ void logToFile(int sd, char* request, int code, int size){
     char ip[20];
     strncpy(ip, inet_ntoa(addr.sin_addr), sizeof(ip));
 
+    // Check if socket have been closed (ip = 0.0.0.0)
+    if(strncmp("0.0.0.0", ip, 6) == 0) return;
+
     //Generate a date string
     char dateString[MAX_PATH_STR] = "";
     time_t t = time(NULL);
@@ -243,9 +246,17 @@ void logToFile(int sd, char* request, int code, int size){
 
     if(ptr != NULL){
         int newlinePos = (int)(ptr - request);
-        strncpy(firstLineRequest, request, newlinePos);
+        if(newlinePos < MAX_PATH_STR)
+            strncpy(firstLineRequest, request, newlinePos);
+        else {
+            request[MAX_PATH_STR-1] = '\0';
+            strncpy(firstLineRequest, request, MAX_PATH_STR);
+        }
     }
-    else strncpy(firstLineRequest, request, sizeof(firstLineRequest));
+    else {
+        request[MAX_PATH_STR-1] = '\0';
+        strncpy(firstLineRequest, request, sizeof(firstLineRequest));
+    }
 
     //Format the string
     snprintf(logMessage, sizeof(logMessage), "%s - - %s \"%s\" %d %d", ip, dateString, firstLineRequest, code, size);
